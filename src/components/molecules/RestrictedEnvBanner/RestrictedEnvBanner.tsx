@@ -30,12 +30,12 @@ const RestrictedEnvBanner: React.FC = () => {
 			<>
 				<div className='w-full flex items-center justify-center border-b border-sky-200/80 bg-[#E0F2F7] px-4 py-2'>
 					<span className='text-sm text-slate-700'>
-						Your {envLabel} is active for the next {days} day{days !== 1 ? 's' : ''}. To continue using,{' '}
+						Your {envLabel} is active for the next {days} day{days !== 1 ? 's' : ''}. To continue after that,{' '}
 						<button
 							type='button'
 							onClick={() => setIsContactDialogOpen(true)}
 							className='inline-flex items-center gap-1 text-slate-800 underline decoration-slate-500/60 hover:decoration-slate-700'>
-							talk to us
+							contact us
 							<ExternalLink className='h-3.5 w-3.5 shrink-0' aria-hidden />
 						</button>
 						.
