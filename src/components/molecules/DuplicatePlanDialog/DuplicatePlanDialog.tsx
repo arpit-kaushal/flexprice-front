@@ -1,4 +1,4 @@
-import { Button, Dialog, Input, Spacer } from '@/components/atoms';
+import { Button, Dialog, Input, Spacer, Textarea } from '@/components/atoms';
 import { PlanApi } from '@/api/PlanApi';
 import { RouteNames } from '@/core/routes/Routes';
 import { ServerError } from '@/core/axios/types';
@@ -18,7 +18,7 @@ interface DuplicatePlanDialogProps {
 	refetchQueryKeys?: string | string[];
 }
 
-type FormErrors = Partial<Record<keyof Pick<ClonePlanRequest, 'name' | 'lookup_key'>, string>>;
+type FormErrors = Partial<Record<keyof ClonePlanRequest | 'metadata', string>>;
 
 const DuplicatePlanDialog: FC<DuplicatePlanDialogProps> = ({
 	planId,
@@ -30,15 +30,28 @@ const DuplicatePlanDialog: FC<DuplicatePlanDialogProps> = ({
 	const navigate = useNavigate();
 	const [name, setName] = useState('');
 	const [lookupKey, setLookupKey] = useState('');
+	const [description, setDescription] = useState('');
+	const [metadataString, setMetadataString] = useState('');
 	const [errors, setErrors] = useState<FormErrors>({});
 
 	useEffect(() => {
 		if (open && plan) {
 			setName('');
 			setLookupKey('');
+			setDescription(plan.description || '');
+			// Pre-fill metadata without "source" so the field shows only user-facing metadata; we add source: "clone" on submit
+			const { source: _omit, ...restMetadata } = plan.metadata || {};
+			setMetadataString(Object.keys(restMetadata).length > 0 ? JSON.stringify(restMetadata, null, 2) : '');
 			setErrors({});
 		}
 	}, [open, plan]);
+
+	// Auto-generate lookup key from name (same as Add Plan dialog)
+	useEffect(() => {
+		if (open) {
+			setLookupKey(`plan-${name?.toLowerCase().replace(/\s/g, '-') || ''}`);
+		}
+	}, [name, open]);
 
 	const validate = (): boolean => {
 		const newErrors: FormErrors = {};
@@ -53,6 +66,22 @@ const DuplicatePlanDialog: FC<DuplicatePlanDialogProps> = ({
 			newErrors.lookup_key = 'Lookup key is required';
 		} else if (plan && lookupKey.trim() === plan.lookup_key) {
 			newErrors.lookup_key = 'Lookup key must be different from the original plan';
+		}
+
+		if (metadataString.trim()) {
+			try {
+				const parsed = JSON.parse(metadataString);
+				if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+					newErrors.metadata = 'Metadata must be a JSON object';
+				} else {
+					const allStrings = Object.values(parsed).every((val) => typeof val === 'string');
+					if (!allStrings) {
+						newErrors.metadata = 'All metadata values must be strings';
+					}
+				}
+			} catch {
+				newErrors.metadata = 'Invalid Metadata format';
+			}
 		}
 
 		setErrors(newErrors);
@@ -79,11 +108,21 @@ const DuplicatePlanDialog: FC<DuplicatePlanDialogProps> = ({
 	const handleSubmit = () => {
 		if (!validate() || !plan) return;
 
+		let metadata: ClonePlanRequest['metadata'] = { source: 'clone', ...plan.metadata };
+		if (metadataString.trim()) {
+			try {
+				const parsed = JSON.parse(metadataString);
+				metadata = { source: 'clone', ...plan.metadata, ...parsed };
+			} catch {
+				return;
+			}
+		}
+
 		const payload: ClonePlanRequest = {
 			name: name.trim(),
 			lookup_key: lookupKey.trim(),
-			...(plan.description && { description: plan.description }),
-			metadata: { source: 'clone', ...plan.metadata },
+			...(description.trim() && { description: description.trim() }),
+			metadata,
 		};
 		clonePlan(payload);
 	};
@@ -93,12 +132,12 @@ const DuplicatePlanDialog: FC<DuplicatePlanDialogProps> = ({
 			isOpen={open}
 			onOpenChange={onOpenChange}
 			title='Duplicate plan'
-			description='Enter a new name and lookup key for the duplicated plan. Entitlements, credit grants, and other settings will be copied.'
+			description='Enter plan details for the duplicated plan. Entitlements, credit grants, and other settings will be copied.'
 			showCloseButton={true}>
 			<Input
-				label='Plan name'
-				placeholder='Enter name for the duplicated plan'
-				description='Must be different from the original plan name.'
+				label='Plan Name'
+				placeholder='Enter a name for the plan'
+				description='A descriptive name for this pricing plan.'
 				value={name}
 				error={errors.name}
 				onChange={(e) => {
@@ -108,15 +147,37 @@ const DuplicatePlanDialog: FC<DuplicatePlanDialogProps> = ({
 			/>
 			<Spacer height='20px' />
 			<Input
-				label='Lookup key'
-				placeholder='Enter lookup key for the duplicated plan'
-				description='Must be different from the original lookup key.'
+				label='Lookup Key'
+				placeholder='Enter a slug for the plan'
+				description='A system identifier used for API calls and integrations.'
 				value={lookupKey}
 				error={errors.lookup_key}
 				onChange={(e) => {
 					setLookupKey(e);
 					if (errors.lookup_key) setErrors((prev) => ({ ...prev, lookup_key: undefined }));
 				}}
+			/>
+			<Spacer height='20px' />
+			<Textarea
+				value={description}
+				onChange={(e) => setDescription(e)}
+				className='min-h-[100px]'
+				placeholder='Enter description'
+				label='Description'
+				description='Helps your team to understand the purpose of this plan.'
+			/>
+			<Spacer height='20px' />
+			<Textarea
+				value={metadataString}
+				onChange={(e) => {
+					setMetadataString(e);
+					if (errors.metadata) setErrors((prev) => ({ ...prev, metadata: undefined }));
+				}}
+				error={errors.metadata}
+				className='min-h-[100px]'
+				placeholder='{"key": "value"}'
+				label='Metadata (Optional)'
+				description='Additional metadata as JSON. All values must be strings.'
 			/>
 			<Spacer height='24px' />
 			<div className='flex justify-end gap-2'>
