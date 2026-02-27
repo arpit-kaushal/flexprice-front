@@ -1,4 +1,4 @@
-import { FC, useMemo, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ColumnData, FlexpriceTable, LineItemCoupon } from '@/components/molecules';
 import PriceOverrideDialog from '@/components/molecules/PriceOverrideDialog/PriceOverrideDialog';
@@ -130,6 +130,13 @@ const PriceQuantityCell: FC<PriceQuantityCellProps> = ({
 	onPriceOverride,
 	onClearCoupon,
 }) => {
+	// Clear transient when it matches override so display stays correct after override is reset
+	useEffect(() => {
+		if (override?.quantity !== undefined && quantityInput != null && override.quantity.toString() === quantityInput) {
+			onQuantityChange(null);
+		}
+	}, [override?.quantity, quantityInput, onQuantityChange]);
+
 	if (price.type !== PRICE_TYPE.FIXED) {
 		return <>pay as you go</>;
 	}
@@ -150,7 +157,11 @@ const PriceQuantityCell: FC<PriceQuantityCellProps> = ({
 					const quantity = parseInt(value, 10) || minQuantity;
 
 					if (quantity === minQuantity) {
-						if (override && Object.keys(override).length === 2 && override.price_id && override.quantity) {
+						const onlyQuantityOverride =
+							override &&
+							((Object.keys(override).length === 1 && override.quantity !== undefined) ||
+								(Object.keys(override).length === 2 && override.price_id && override.quantity));
+						if (onlyQuantityOverride) {
 							onResetOverride(price.id);
 						} else if (override) {
 							const { quantity: _q, ...rest } = override;
@@ -159,6 +170,9 @@ const PriceQuantityCell: FC<PriceQuantityCellProps> = ({
 					} else {
 						if (lineItemCoupon) onClearCoupon(price.id);
 						onPriceOverride(price.id, { quantity });
+						// Keep transient value so display doesn't snap back before parent re-renders
+						onQuantityChange(quantity.toString());
+						return;
 					}
 					onQuantityChange(value === quantity.toString() ? null : value);
 				}}
