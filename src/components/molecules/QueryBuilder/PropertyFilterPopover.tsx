@@ -16,12 +16,28 @@ import FilterMultiSelect from './FilterMultiSelect';
 import FilterAsyncSelect from './FilterAsyncSelect';
 import FilterAsyncMultiSelect from './FilterAsyncMultiSelect';
 
+export interface PropertyFilterRow {
+	id: string;
+	key: string;
+	value: string;
+}
+
+interface PropertyFiltersConfig {
+	rows: PropertyFilterRow[];
+	setRows: React.Dispatch<React.SetStateAction<PropertyFilterRow[]>>;
+	createEmpty: () => PropertyFilterRow;
+}
+
 interface Props {
 	fields: FilterField[];
 	value: FilterCondition[];
 	onChange: (filters: FilterCondition[]) => void;
 	className?: string;
 	sortable?: boolean;
+	/** When provided, renders a "Property filters" section (key/value rows) inside the popover below the filter list. */
+	propertyFilters?: PropertyFiltersConfig;
+	/** Called when "Reset filters" is clicked, so the parent can clear extra state (e.g. property filters). */
+	onResetCallback?: () => void;
 }
 
 const MIN_POPOVER_WIDTH = 400;
@@ -62,7 +78,15 @@ const getNewFilterWithDefaultValues = (field: FilterField): FilterCondition => (
 	...getDefaultValueByFieldType(field),
 });
 
-const FilterPopover: React.FC<Props> = ({ fields, value = [], onChange, className, sortable = false }) => {
+const PropertyFilterPopover: React.FC<Props> = ({
+	fields,
+	value = [],
+	onChange,
+	className,
+	sortable = false,
+	propertyFilters,
+	onResetCallback,
+}) => {
 	const [isOpen, setIsOpen] = useState(false);
 
 	const handleAddFilter = useCallback(() => {
@@ -285,10 +309,23 @@ const FilterPopover: React.FC<Props> = ({ fields, value = [], onChange, classNam
 									<X className='h-3.5 w-3.5' />
 								</Button>
 							</div>
-							<div className='mt-2'>
+							<div className='flex items-center gap-2 mt-2'>
 								<Button size='sm' onClick={handleAddFilter} className='w-fit h-9 text-sm px-2.5'>
 									Add filter
 								</Button>
+								{(onResetCallback != null || propertyFilters != null) && (
+									<Button
+										variant='outline'
+										size='sm'
+										onClick={() => {
+											onChange([]);
+											if (propertyFilters) propertyFilters.setRows([propertyFilters.createEmpty()]);
+											onResetCallback?.();
+										}}
+										className='h-9 text-sm px-2.5'>
+										Reset filters
+									</Button>
+								)}
 							</div>
 						</div>
 					) : (
@@ -300,88 +337,154 @@ const FilterPopover: React.FC<Props> = ({ fields, value = [], onChange, classNam
 								</Button>
 							</div>
 
-							<Sortable value={value} onValueChange={handleReorder} getItemValue={(item) => item.field}>
-								<SortableContent className='flex flex-col gap-1'>
-									{value.map((filter, index) => {
-										const field = fields.find((f) => f.field === filter.field);
-										if (!field) return null;
+							<div className='overflow-y-auto max-h-[min(60vh,400px)] flex flex-col gap-1.5'>
+								<Sortable value={value} onValueChange={handleReorder} getItemValue={(item) => item.field}>
+									<SortableContent className='flex flex-col gap-1'>
+										{value.map((filter, index) => {
+											const field = fields.find((f) => f.field === filter.field);
+											if (!field) return null;
 
-										return (
-											<SortableItem key={filter.id} value={filter.field}>
-												<div
-													className={cn('grid items-center', GRID_GAP, ITEM_PADDING, 'w-full rounded hover:bg-accent/40 transition-colors')}
-													style={gridTemplateColumns}>
-													<span className='text-xs text-muted-foreground'>{index > 0 ? 'And' : 'Where'}</span>
-													<Combobox
-														options={fieldOptions}
-														value={filter.field}
-														onChange={(value) => handleFieldChange(filter.id, value)}
-														placeholder='Select field'
-														width='100%'
-														triggerClassName='h-9 text-sm overflow-hidden'
-														searchPlaceholder='Search fields...'
-														contentClassName='!z-[110]'
-													/>
-
-													<Select
-														options={field.operators
-															.filter((operator) => operator != null)
-															.map((operator) => ({
-																value: operator,
-																label: operator
-																	.toLowerCase()
-																	.replace(/_/g, ' ')
-																	.replace(/\b\w/g, (char) => char.toUpperCase()),
-															}))}
-														value={filter.operator}
-														onChange={(value) => handleFilterUpdate(filter.id, { operator: value as FilterOperator })}
-														placeholder='Select operator'
-														className='h-9 text-sm'
-														contentClassName='!z-[110]'
-													/>
-
-													<div className='min-w-0'>{renderValueInput(filter)}</div>
-
-													<div className='flex items-center gap-1 justify-end'>
-														<Button
-															variant='ghost'
-															size='icon'
-															className='h-7 w-7 shrink-0 hover:bg-destructive/10 hover:text-destructive'
-															onClick={() => handleRemoveFilter(filter.id)}>
-															<Trash2 className='h-3.5 w-3.5' />
-														</Button>
-
-														{sortable && (
-															<SortableItemHandle asChild>
-																<Button variant='ghost' size='icon' className='h-7 w-7 shrink-0'>
-																	<GripVertical className='h-3.5 w-3.5' />
-																</Button>
-															</SortableItemHandle>
+											return (
+												<SortableItem key={filter.id} value={filter.field}>
+													<div
+														className={cn(
+															'grid items-center',
+															GRID_GAP,
+															ITEM_PADDING,
+															'w-full rounded hover:bg-accent/40 transition-colors',
 														)}
+														style={gridTemplateColumns}>
+														<span className='text-xs text-muted-foreground'>{index > 0 ? 'And' : 'Where'}</span>
+														<Combobox
+															options={fieldOptions}
+															value={filter.field}
+															onChange={(value) => handleFieldChange(filter.id, value)}
+															placeholder='Select field'
+															width='100%'
+															triggerClassName='h-9 text-sm overflow-hidden'
+															searchPlaceholder='Search fields...'
+															contentClassName='!z-[110]'
+														/>
+
+														<Select
+															options={field.operators
+																.filter((operator) => operator != null)
+																.map((operator) => ({
+																	value: operator,
+																	label: operator
+																		.toLowerCase()
+																		.replace(/_/g, ' ')
+																		.replace(/\b\w/g, (char) => char.toUpperCase()),
+																}))}
+															value={filter.operator}
+															onChange={(value) => handleFilterUpdate(filter.id, { operator: value as FilterOperator })}
+															placeholder='Select operator'
+															className='h-9 text-sm'
+															contentClassName='!z-[110]'
+														/>
+
+														<div className='min-w-0'>{renderValueInput(filter)}</div>
+
+														<div className='flex items-center gap-1 justify-end'>
+															<Button
+																variant='ghost'
+																size='icon'
+																className='h-7 w-7 shrink-0 hover:bg-destructive/10 hover:text-destructive'
+																onClick={() => handleRemoveFilter(filter.id)}>
+																<Trash2 className='h-3.5 w-3.5' />
+															</Button>
+
+															{sortable && (
+																<SortableItemHandle asChild>
+																	<Button variant='ghost' size='icon' className='h-7 w-7 shrink-0'>
+																		<GripVertical className='h-3.5 w-3.5' />
+																	</Button>
+																</SortableItemHandle>
+															)}
+														</div>
 													</div>
+												</SortableItem>
+											);
+										})}
+									</SortableContent>
+									<SortableOverlay>
+										<div className={cn('grid', GRID_GAP, ITEM_PADDING, 'w-full bg-accent/40 rounded')} style={gridTemplateColumns}>
+											<div className='h-7 rounded border-border/40 bg-background' />
+											<div className='h-7 rounded border-border/40 bg-background' />
+											<div className='h-7 rounded border-border/40 bg-background' />
+											<div className='flex gap-1 justify-end'>
+												<div className='h-7 w-7 rounded border-border/40 bg-background' />
+												<div className='h-7 w-7 rounded border-border/40 bg-background' />
+											</div>
+										</div>
+									</SortableOverlay>
+								</Sortable>
+
+								{propertyFilters ? (
+									<div className='pt-3 mt-2 border-t border-border flex flex-col gap-1.5'>
+										<h4 className='text-sm font-medium leading-none'>Property filters</h4>
+										<div className='space-y-3'>
+											{propertyFilters.rows.map((row) => (
+												<div key={row.id} className='flex gap-2 items-end flex-wrap'>
+													<div className='flex-1 min-w-[120px]'>
+														<Input
+															placeholder='Key'
+															value={row.key}
+															onChange={(e) =>
+																propertyFilters.setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, key: e.target.value } : r)))
+															}
+															className='h-9 text-sm'
+														/>
+													</div>
+													<div className='flex-1 min-w-[120px]'>
+														<Input
+															placeholder='Value'
+															value={row.value}
+															onChange={(e) =>
+																propertyFilters.setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, value: e.target.value } : r)))
+															}
+															className='h-9 text-sm'
+														/>
+													</div>
+													<Button
+														variant='ghost'
+														size='icon'
+														className='h-7 w-7 shrink-0 hover:bg-destructive/10 hover:text-destructive'
+														onClick={() =>
+															propertyFilters.setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== row.id) : prev))
+														}
+														aria-label='Remove property filter'>
+														<Trash2 className='h-3.5 w-3.5' />
+													</Button>
 												</div>
-											</SortableItem>
-										);
-									})}
-								</SortableContent>
-								<SortableOverlay>
-									<div className={cn('grid', GRID_GAP, ITEM_PADDING, 'w-full bg-accent/40 rounded')} style={gridTemplateColumns}>
-										<div className='h-7 rounded border-border/40 bg-background' />
-										<div className='h-7 rounded border-border/40 bg-background' />
-										<div className='h-7 rounded border-border/40 bg-background' />
-										<div className='flex gap-1 justify-end'>
-											<div className='h-7 w-7 rounded border-border/40 bg-background' />
-											<div className='h-7 w-7 rounded border-border/40 bg-background' />
+											))}
 										</div>
 									</div>
-								</SortableOverlay>
-							</Sortable>
+								) : null}
+							</div>
 
-							<div className='flex items-center gap-2 pt-1.5 px-2'>
+							<div className='flex items-center gap-2 pt-2 px-2 shrink-0 border-t border-border/50'>
 								<Button size='sm' onClick={handleAddFilter} className='h-9 text-sm px-2.5 flex items-center gap-1'>
 									Add filter
 								</Button>
-								<Button variant='outline' size='sm' onClick={() => onChange([])} className='h-9 text-sm px-2.5'>
+								{propertyFilters && (
+									<Button
+										variant='outline'
+										size='sm'
+										className='h-9 text-sm px-2.5 flex items-center gap-1'
+										onClick={() => propertyFilters.setRows((prev) => [...prev, propertyFilters.createEmpty()])}>
+										Add Property filter
+									</Button>
+								)}
+								<Button
+									variant='outline'
+									size='sm'
+									onClick={() => {
+										onChange([]);
+										if (propertyFilters) propertyFilters.setRows([propertyFilters.createEmpty()]);
+										onResetCallback?.();
+									}}
+									className='h-9 text-sm px-2.5'>
 									Reset filters
 								</Button>
 							</div>
@@ -393,4 +496,4 @@ const FilterPopover: React.FC<Props> = ({ fields, value = [], onChange, classNam
 	);
 };
 
-export default FilterPopover;
+export default PropertyFilterPopover;

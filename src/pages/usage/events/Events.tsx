@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Button, Page } from '@/components/atoms';
-import { EventsTable, ApiDocsContent, QueryBuilder } from '@/components/molecules';
+import { EventsTable, ApiDocsContent, PropertyFilterQueryBuilder } from '@/components/molecules';
 import { Event } from '@/models/Event';
 import EventsApi from '@/api/EventsApi';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -294,18 +294,20 @@ const EventsPage: React.FC = () => {
 		<Page heading='Events'>
 			<ApiDocsContent tags={['Events']} />
 			<div className='bg-white rounded-md flex items-start gap-4'>
-				<QueryBuilder
+				<PropertyFilterQueryBuilder
 					filterOptions={filterOptions}
 					filters={filters}
 					onFilterChange={setFilters}
 					sortOptions={sortingOptions}
 					onSortChange={setSorts}
 					selectedSorts={sorts}
+					debounceTime={300}
 					propertyFiltersConfig={{
 						rows: propertyFilters,
 						setRows: setPropertyFilters,
 						createEmpty: createEmptyPropertyFilter,
 					}}
+					onFilterPopoverReset={resetFilters}
 				/>
 				<Button variant='outline' onClick={resetFilters}>
 					<RefreshCw />
