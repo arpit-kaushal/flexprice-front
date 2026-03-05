@@ -266,6 +266,7 @@ const AddEntitlementDrawer: FC<Props> = ({
 		setShowSelect(true);
 		setActiveFeature(null);
 		setTempEntitlement({});
+		setIsCalculatorOpen(false);
 	}, [disabledFeatures]);
 
 	// Memoize already added feature IDs (from entitlements + initial entitlements)
@@ -383,6 +384,7 @@ const AddEntitlementDrawer: FC<Props> = ({
 		setTempEntitlement({});
 		setActiveFeature(null);
 		setErrors({});
+		setIsCalculatorOpen(false);
 	}, [activeFeature, validateCurrentEntitlement, alreadyAddedFeatureIds, tempEntitlement, entityType, entityId]);
 
 	// Clear errors when feature changes
@@ -411,6 +413,7 @@ const AddEntitlementDrawer: FC<Props> = ({
 			setSelectedFeatures((prev) => prev.filter((feature) => feature.id !== activeFeature.id));
 		}
 		setTempEntitlement({});
+		setIsCalculatorOpen(false);
 	}, [activeFeature]);
 
 	return (
