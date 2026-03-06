@@ -115,12 +115,12 @@ const validateEntitlement = (activeFeature: Feature | null, tempEntitlement: Par
 	}
 };
 
-/** Display value = unit value × conversion rate. Use these for all conversions. */
+/** Unit Value = Display Value × Conversion Factor. Use these for all conversions. */
 const DISPLAY_VALUE_FORMULA = {
-	/** displayValue = unitValue * conversionRate */
-	toDisplay: (unitValue: number, conversionRate: number) => unitValue * conversionRate,
-	/** unitValue = displayValue / conversionRate */
-	toUnit: (displayValue: number, conversionRate: number) => (conversionRate !== 0 ? displayValue / conversionRate : null),
+	/** displayValue = unitValue / conversionRate */
+	toDisplay: (unitValue: number, conversionRate: number) => (conversionRate !== 0 ? unitValue / conversionRate : null),
+	/** unitValue = displayValue * conversionRate */
+	toUnit: (displayValue: number, conversionRate: number) => displayValue * conversionRate,
 } as const;
 
 interface DisplayValueCalculatorDialogProps {
@@ -141,7 +141,7 @@ const DisplayValueCalculatorDialog: FC<DisplayValueCalculatorDialogProps> = ({
 	baseUnitPlural = 'units',
 	onConfirm,
 }) => {
-	// User enters display value; we compute unit value = displayValue / conversionRate
+	// User enters display value; we compute unit value = displayValue * conversionRate
 	const [displayValueInput, setDisplayValueInput] = useState<string>('');
 
 	useEffect(() => {
