@@ -10,7 +10,6 @@ import { useState, useMemo } from 'react';
 import { GroupApi } from '@/api/GroupApi';
 import formatDate from '@/utils/common/format_date';
 import formatChips from '@/utils/common/format_chips';
-import { groupsFilterOptions, groupsInitialFilters, groupsInitialSorts, groupsSortOptions } from './groupsQueryConfig';
 
 const GroupsPage = () => {
 	const [groupDrawerOpen, setGroupDrawerOpen] = useState(false);
@@ -57,41 +56,30 @@ const GroupsPage = () => {
 			<div className='space-y-6'>
 				<QueryableDataArea<Group>
 					queryConfig={{
-						filterOptions: groupsFilterOptions,
-						sortOptions: groupsSortOptions,
-						initialFilters: groupsInitialFilters,
-						initialSorts: groupsInitialSorts,
+						filterOptions: [],
+						sortOptions: [],
+						initialFilters: [],
+						initialSorts: [],
 						debounceTime: 300,
 					}}
 					dataConfig={{
 						queryKey: 'fetchGroups',
 						fetchFn: async (params) => {
-							const filters = params.filters ?? [];
-							const sort = params.sort ?? [];
-							const nameFilter = filters.find((f) => f.field === 'name' && f.value?.string != null);
-							const lookupKeyFilter = filters.find((f) => f.field === 'lookup_key' && f.value?.string != null);
 							const response = await GroupApi.getGroupsByFilter({
 								entity_type: GROUP_ENTITY_TYPE.PRICE,
 								limit: params.limit,
 								offset: params.offset,
-								filters,
-								sort,
-								...(nameFilter?.value?.string !== undefined && nameFilter.value.string !== '' && { name: nameFilter.value.string }),
-								...(lookupKeyFilter?.value?.string !== undefined &&
-									lookupKeyFilter.value.string !== '' && { lookup_key: lookupKeyFilter.value.string }),
 							});
 							return {
 								items: response.items as Group[],
 								pagination: response.pagination,
 							};
 						},
-						probeFetchFn: async (_params) => {
+						probeFetchFn: async () => {
 							const response = await GroupApi.getGroupsByFilter({
 								entity_type: GROUP_ENTITY_TYPE.PRICE,
 								limit: 1,
 								offset: 0,
-								filters: [],
-								sort: [],
 							});
 							return {
 								items: response.items as Group[],
@@ -110,7 +98,7 @@ const GroupsPage = () => {
 						buttonLabel: 'Create Group',
 						buttonAction: handleOnAdd,
 						tags: ['Groups'],
-						tutorials: GUIDES.plans.tutorials,
+						tutorials: GUIDES.groups.tutorials,
 					}}
 				/>
 			</div>

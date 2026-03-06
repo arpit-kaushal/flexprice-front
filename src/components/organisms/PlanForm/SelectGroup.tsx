@@ -3,8 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { SearchableSelect, SelectOption } from '@/components/atoms';
 import { GroupApi } from '@/api/GroupApi';
 import { GROUP_ENTITY_TYPE, Group } from '@/models/Group';
-import { DataType } from '@/types/common/QueryBuilder';
-import { FilterOperator } from '@/types/common/QueryBuilder';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -33,20 +31,7 @@ const SelectGroup: FC<Props> = ({
 	hiddenIfEmpty = false,
 	showLookupKey = true,
 }) => {
-	// Build filter to include entity_type so backend receives it in the filters array
-	const filterByEntityType = useMemo(
-		() => [
-			{
-				field: 'entity_type',
-				operator: FilterOperator.EQUAL as const,
-				data_type: DataType.STRING as const,
-				value: { string: entityType },
-			},
-		],
-		[entityType],
-	);
-
-	// Query for fetching groups
+	// Query for fetching groups (filtered by entity_type via payload)
 	const {
 		data: groupsData,
 		isLoading,
@@ -58,7 +43,6 @@ const SelectGroup: FC<Props> = ({
 				entity_type: entityType,
 				limit: 100,
 				offset: 0,
-				filters: filterByEntityType,
 			}),
 	});
 
