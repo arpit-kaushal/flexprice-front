@@ -23,6 +23,7 @@ import { toSentenceCase } from '@/utils/common/helper_functions';
 import formatChips from '@/utils/common/format_chips';
 import formatDate from '@/utils/common/format_date';
 import { getFeatureIcon } from '@/components/atoms/SelectFeature/SelectFeature';
+import { searchGroupsForFilter } from '@/utils/filterSearchHelpers';
 
 const sortingOptions: SortOption[] = [
 	{
@@ -79,6 +80,16 @@ const filterOptions: FilterField[] = [
 			{ value: FEATURE_TYPE.BOOLEAN, label: 'Boolean' },
 			{ value: FEATURE_TYPE.STATIC, label: 'Static' },
 		],
+	},
+	{
+		field: 'group_id',
+		label: 'Group',
+		fieldType: FilterFieldType.ASYNC_MULTI_SELECT,
+		operators: [FilterOperator.IN, FilterOperator.NOT_IN],
+		dataType: DataType.ARRAY,
+		asyncConfig: {
+			searchFn: searchGroupsForFilter,
+		},
 	},
 ];
 
