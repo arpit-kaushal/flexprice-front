@@ -21,7 +21,7 @@ import { BILLING_PERIOD } from '@/constants/constants';
 import { ExternalLink } from 'lucide-react';
 
 function getCommitmentPeriodLabel(subscription: SubscriptionType | undefined): string {
-	const period = subscription?.billing_period;
+	const period = subscription?.commitment_duration;
 	const count = subscription?.billing_period_count ?? 1;
 
 	if (!period) return '--';
