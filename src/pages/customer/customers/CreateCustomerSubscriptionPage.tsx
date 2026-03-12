@@ -157,7 +157,20 @@ const usePlanDetails = (planId: string | undefined) => {
 		queryKey: ['planDetails', planId],
 		queryFn: async () => {
 			if (!planId) return null;
-			return await PlanApi.getPlanById(planId);
+			const response = await PlanApi.getPlansByFilter({
+				limit: 1,
+				offset: 0,
+				filters: [
+					{
+						field: 'id',
+						operator: FilterOperator.EQUAL,
+						data_type: DataType.STRING,
+						value: { string: planId },
+					},
+				],
+				sort: [],
+			});
+			return response.items[0] ?? null;
 		},
 		enabled: !!planId,
 		staleTime: 5 * 60 * 1000,

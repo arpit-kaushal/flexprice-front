@@ -120,6 +120,7 @@ const SubscriptionForm = ({
 				entity_ids: [state.selectedPlan],
 				entity_type: PRICE_ENTITY_TYPE.PLAN,
 				allow_expired_prices: false,
+				limit: 10000,
 			});
 			return response;
 		},
