@@ -6,7 +6,7 @@ import { UserApi } from '@/api/UserApi';
 import { User } from '@/models';
 import toast from 'react-hot-toast';
 import { ColumnData } from '@/components/molecules/Table/Table';
-import { AlertTriangle, Copy, Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { AlertTriangle, Copy, Eye, EyeOff, Info, Lock, Mail } from 'lucide-react';
 import { refetchQueries } from '@/core/services/tanstack/ReactQueryProvider';
 import usePagination, { PAGINATION_PREFIX } from '@/hooks/usePagination';
 
@@ -93,10 +93,13 @@ function MembersSection() {
 		setAddOpen(open);
 	};
 
-	const handleCopyPassword = () => {
-		if (oneTimePassword) {
-			navigator.clipboard.writeText(oneTimePassword);
+	const handleCopyPassword = async () => {
+		if (!oneTimePassword) return;
+		try {
+			await navigator.clipboard.writeText(oneTimePassword);
 			toast.success('Copied to clipboard');
+		} catch {
+			toast.error('Could not copy to clipboard');
 		}
 	};
 
@@ -153,7 +156,12 @@ function MembersSection() {
 							placeholder='user@example.com'
 							value={email}
 							onChange={(value) => setEmail(value)}
-							onKeyDown={(e) => e.key === 'Enter' && handleAddUser()}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter') {
+									e.preventDefault();
+									handleAddUser();
+								}
+							}}
 						/>
 					</div>
 					<Button onClick={handleAddUser} disabled={createUser.isPending} isLoading={createUser.isPending}>
@@ -173,12 +181,14 @@ function MembersSection() {
 						<div className='flex items-center gap-3 rounded-lg bg-blue-50 px-4 py-3 border border-blue-200'>
 							<Mail className='h-4 w-4 text-blue-600 flex-shrink-0' />
 							<span className='flex-1 min-w-0 text-sm font-semibold text-blue-900 truncate'>{addedUserEmail}</span>
-							<Lock className='h-4 w-4 text-blue-600 flex-shrink-0' aria-label='Read only' />
 						</div>
 					)}
-					{/* Password */}
+					{/* Password: Lock on left */}
 					<div className='space-y-2'>
-						<span className='text-sm font-medium text-gray-700'>Password</span>
+						<div className='flex items-center gap-2'>
+							<Lock className='h-4 w-4 text-gray-500' />
+							<span className='text-sm font-medium text-gray-700'>Password</span>
+						</div>
 						<div className='relative bg-gray-100 rounded-md'>
 							<Input
 								id='temp-password'
@@ -192,26 +202,30 @@ function MembersSection() {
 									type='button'
 									onClick={togglePasswordVisibility}
 									className='p-1 text-gray-500 hover:text-gray-700'
-									title={showPassword ? 'Hide' : 'Show'}>
+									title={showPassword ? 'Hide password' : 'Show password'}
+									aria-label={showPassword ? 'Hide password' : 'Show password'}>
 									{showPassword ? <EyeOff className='h-4 w-4' /> : <Eye className='h-4 w-4' />}
 								</button>
-								<button type='button' onClick={handleCopyPassword} className='p-1 text-gray-500 hover:text-gray-700' title='Copy'>
+								<button
+									type='button'
+									onClick={handleCopyPassword}
+									className='p-1 text-gray-500 hover:text-gray-700'
+									title='Copy password'
+									aria-label='Copy password'>
 									<Copy className='h-4 w-4' />
 								</button>
 							</div>
 						</div>
 					</div>
-					{/* Warning: two points only */}
-					<div className='rounded-lg border border-amber-200 bg-amber-50 p-4'>
-						<div className='flex items-start gap-3'>
-							<AlertTriangle className='h-5 w-5 flex-shrink-0 text-amber-600 mt-0.5' />
-							<ul className='space-y-3 text-sm text-amber-900 list-disc list-inside'>
-								<li className='leading-relaxed'>
-									This password will be shown only once and is not stored. Please share it securely with the user.
-								</li>
-								<li className='leading-relaxed'>They can sign in using this password or Gmail and reset their password later if needed.</li>
-							</ul>
-						</div>
+					{/* Warning (yellow): password can be reset later */}
+					<div className='flex items-center gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5'>
+						<AlertTriangle className='h-4 w-4 flex-shrink-0 text-amber-600' />
+						<span className='text-sm text-amber-900'>This password can be reset later.</span>
+					</div>
+					{/* Info: sign in with email/password or Google */}
+					<div className='flex items-center gap-2.5 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2.5'>
+						<Info className='h-4 w-4 flex-shrink-0 text-sky-600' />
+						<span className='text-sm text-sky-900'>The user can log in using email/password or Google login.</span>
 					</div>
 					<div className='pt-2'>
 						<Button onClick={handleClosePasswordDialog}>Done</Button>
