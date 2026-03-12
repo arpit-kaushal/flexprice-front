@@ -15,12 +15,11 @@ import {
 	CREDIT_GRANT_PERIOD_UNIT,
 	CREDIT_GRANT_SCOPE,
 	ENTITLEMENT_ENTITY_TYPE,
-	PRICE_ENTITY_TYPE,
 } from '@/models';
 import { BILLING_PERIOD, PAYMENT_TERMS_NONE, paymentTermsOptions } from '@/constants/constants';
 import { SubscriptionFormState } from '@/pages';
 import { useQuery } from '@tanstack/react-query';
-import { PriceApi } from '@/api/PriceApi';
+import { usePlanPrices } from '@/hooks/usePlanPrices';
 import CreditGrantApi from '@/api/CreditGrantApi';
 import EntitlementApi from '@/api/EntitlementApi';
 import AddonApi from '@/api/AddonApi';
@@ -101,39 +100,15 @@ const SubscriptionForm = ({
 	onPhasesChange?: (phases: SubscriptionPhaseCreateRequest[]) => void;
 	allCoupons?: Coupon[];
 }) => {
-	// Helper function to check if price should be shown (start_date <= now or no start_date)
-	const isPriceActive = (price: { start_date?: string }) => {
-		if (!price.start_date) return true; // No start_date means it's active
-		const now = new Date();
-		const startDate = new Date(price.start_date);
-		// Check if date is valid
-		if (isNaN(startDate.getTime())) return true; // Invalid date, treat as active
-		return startDate <= now;
-	};
+	// Fetch plan prices via shared hook (same cache key + canonical active filter as CreateCustomerSubscriptionPage)
+	const { data: selectedPlanPrices } = usePlanPrices(state.selectedPlan);
 
-	// Fetch plan prices separately when a plan is selected
-	const { data: selectedPlanPrices } = useQuery({
-		queryKey: ['planPrices', state.selectedPlan],
-		queryFn: async () => {
-			if (!state.selectedPlan) return null;
-			const response = await PriceApi.searchPrices({
-				entity_ids: [state.selectedPlan],
-				entity_type: PRICE_ENTITY_TYPE.PLAN,
-				allow_expired_prices: false,
-				limit: 10000,
-			});
-			return response;
-		},
-		enabled: !!state.selectedPlan,
-	});
-
-	// Current prices for subscription-level and phase management
+	// Current prices for subscription-level and phase management (hook already returns only active prices)
 	const currentPrices =
 		selectedPlanPrices?.items?.filter(
 			(price) =>
 				price.billing_period.toLowerCase() === state.billingPeriod.toLowerCase() &&
-				price.currency.toLowerCase() === state.currency.toLowerCase() &&
-				isPriceActive(price),
+				price.currency.toLowerCase() === state.currency.toLowerCase(),
 		) || [];
 
 	// Price overrides functionality for subscription-level

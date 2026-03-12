@@ -209,10 +209,10 @@ const InvoicesPage = () => {
 			{
 				title: 'Customer',
 				render: (row: Invoice) => {
-					if (!row.customer?.name) {
+					if (!row.customer?.name || !row.customer?.id) {
 						return '--';
 					}
-					return <RedirectCell redirectUrl={`${RouteNames.customers}/${row.customer?.id}`}>{row.customer?.name}</RedirectCell>;
+					return <RedirectCell redirectUrl={`${RouteNames.customers}/${row.customer.id}`}>{row.customer.name}</RedirectCell>;
 				},
 			},
 			{

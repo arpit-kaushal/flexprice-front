@@ -36,6 +36,7 @@ export class PlanApi {
 		const { limit = 10, offset = 0, filters = [], sort = [] } = payload;
 
 		const requestPayload = {
+			...payload,
 			limit,
 			offset,
 			filters,

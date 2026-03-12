@@ -9,7 +9,6 @@ import { UsageTable, SubscriptionForm } from '@/components/organisms';
 import { Building, User, AlertTriangle } from 'lucide-react';
 
 import { AddonApi, CustomerApi, PlanApi, SubscriptionApi, TaxApi, CouponApi } from '@/api';
-import { PriceApi } from '@/api/PriceApi';
 import { refetchQueries } from '@/core/services/tanstack/ReactQueryProvider';
 import { RouteNames } from '@/core/routes/Routes';
 import { ServerError } from '@/core/axios/types';
@@ -24,7 +23,6 @@ import {
 	INVOICE_BILLING,
 	PAYMENT_TERMS,
 	SUBSCRIPTION_STATUS,
-	PRICE_ENTITY_TYPE,
 } from '@/models';
 import { InternalCreditGrantRequest, creditGrantToInternal, internalToCreateRequest } from '@/types/dto/CreditGrant';
 import { BILLING_PERIOD, PAYMENT_TERMS_NONE, SANDBOX_AUTO_CANCELLATION_DAYS } from '@/constants/constants';
@@ -48,6 +46,7 @@ import { extractSubscriptionBoundaries, extractFirstPhaseData } from '@/utils/su
 
 import { useBreadcrumbsStore } from '@/store/useBreadcrumbsStore';
 import { useEnvironment } from '@/hooks/useEnvironment';
+import { usePlanPrices } from '@/hooks/usePlanPrices';
 
 type Params = {
 	id: string;
@@ -177,37 +176,7 @@ const usePlanDetails = (planId: string | undefined) => {
 		refetchOnWindowFocus: false,
 	});
 
-	const pricesQuery = useQuery({
-		queryKey: ['planPrices', planId],
-		queryFn: async () => {
-			if (!planId) return null;
-			const response = await PriceApi.searchPrices({
-				entity_ids: [planId],
-				entity_type: PRICE_ENTITY_TYPE.PLAN,
-				allow_expired_prices: false,
-			});
-			// Filter out expired prices based on end_date
-			const now = new Date();
-			const filteredItems = response.items.filter((price) => {
-				// Keep prices without an end_date (they don't expire)
-				if (!price.end_date) {
-					return true;
-				}
-				// Parse end_date and check if it's in the future or equal to now
-				const endDate = new Date(price.end_date);
-				// If date is invalid, keep the price (safer default)
-				if (isNaN(endDate.getTime())) {
-					return true;
-				}
-				// Only keep prices where end_date is in the future or equal to now
-				return endDate >= now;
-			});
-			return { ...response, items: filteredItems };
-		},
-		enabled: !!planId,
-		staleTime: 5 * 60 * 1000,
-		refetchOnWindowFocus: false,
-	});
+	const pricesQuery = usePlanPrices(planId);
 
 	return {
 		data: planQuery.data,

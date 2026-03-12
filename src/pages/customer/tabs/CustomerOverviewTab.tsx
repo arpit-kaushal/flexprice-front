@@ -247,43 +247,43 @@ const CustomerOverviewTab = () => {
 	const renderSubscriptionContent = () => {
 		const hasItems = (currentPageItems?.length ?? 0) > 0;
 
-		if (hasItems) {
-			return (
-				<Card variant='notched'>
-					<CardHeader title='Subscriptions' cta={!isArchived && <AddButton onClick={handleAddSubscription} />} />
-					<QueryBuilder
-						filterOptions={subscriptionFilterOptions}
-						filters={filters}
-						onFilterChange={setFilters}
-						sortOptions={subscriptionSortOptions}
-						selectedSorts={sorts}
-						onSortChange={setSorts}
-						debounceTime={300}
-					/>
-					<SubscriptionTable
-						onRowClick={(row) => {
-							navigate(`${RouteNames.customers}/${customerId}/subscription/${row.id}`);
-						}}
-						data={subscriptionsWithPlan as Subscription[]}
-						subscriptionOverrides={subscriptionOverrides}
-					/>
-					<Spacer className='!h-4' />
-					<ShortPagination
-						unit='Subscriptions'
-						totalItems={subscriptionsData?.pagination?.total ?? 0}
-						prefix={PAGINATION_PREFIX.CUSTOMER_SUBSCRIPTIONS}
-						pageSize={limit}
-					/>
-				</Card>
-			);
-		}
-
 		return (
-			<NoDataCard
-				title='Subscriptions'
-				subtitle={isArchived ? 'No subscriptions found' : 'No active subscriptions'}
-				cta={!isArchived && <AddButton onClick={handleAddSubscription} />}
-			/>
+			<Card variant='notched'>
+				<CardHeader title='Subscriptions' cta={!isArchived && <AddButton onClick={handleAddSubscription} />} />
+				<QueryBuilder
+					filterOptions={subscriptionFilterOptions}
+					filters={filters}
+					onFilterChange={setFilters}
+					sortOptions={subscriptionSortOptions}
+					selectedSorts={sorts}
+					onSortChange={setSorts}
+					debounceTime={300}
+				/>
+				{hasItems ? (
+					<>
+						<SubscriptionTable
+							onRowClick={(row) => {
+								navigate(`${RouteNames.customers}/${customerId}/subscription/${row.id}`);
+							}}
+							data={subscriptionsWithPlan as Subscription[]}
+							subscriptionOverrides={subscriptionOverrides}
+						/>
+						<Spacer className='!h-4' />
+						<ShortPagination
+							unit='Subscriptions'
+							totalItems={subscriptionsData?.pagination?.total ?? 0}
+							prefix={PAGINATION_PREFIX.CUSTOMER_SUBSCRIPTIONS}
+							pageSize={limit}
+						/>
+					</>
+				) : (
+					<NoDataCard
+						title='Subscriptions'
+						subtitle={isArchived ? 'No subscriptions found' : 'No active subscriptions'}
+						cta={!isArchived && <AddButton onClick={handleAddSubscription} />}
+					/>
+				)}
+			</Card>
 		);
 	};
 

@@ -61,7 +61,13 @@ const SubscriptionTable: FC<SubscriptionTableProps> = ({ data, onRowClick, allow
 						<span>{planName}</span>
 						{hasOverride && (
 							<Tooltip content='Plan modified' delayDuration={0}>
-								<Info className='h-4 w-4 shrink-0 text-muted-foreground hover:text-foreground transition-colors' />
+								<span
+									tabIndex={0}
+									role='img'
+									aria-label='Plan modified'
+									className='inline-flex cursor-default rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'>
+									<Info className='h-4 w-4 shrink-0 text-muted-foreground hover:text-foreground transition-colors' />
+								</span>
 							</Tooltip>
 						)}
 					</div>
