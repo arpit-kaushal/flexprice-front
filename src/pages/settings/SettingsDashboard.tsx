@@ -6,7 +6,8 @@ import { UserApi } from '@/api/UserApi';
 import { User } from '@/models';
 import toast from 'react-hot-toast';
 import { ColumnData } from '@/components/molecules/Table/Table';
-import { AlertTriangle, Copy, Eye, EyeOff, Info, Lock, Mail } from 'lucide-react';
+import { AlertTriangle, Copy, Download, Eye, EyeOff, Info, Link2, Lock, Mail } from 'lucide-react';
+import { RouteNames } from '@/core/routes/Routes';
 import { refetchQueries } from '@/core/services/tanstack/ReactQueryProvider';
 import usePagination, { PAGINATION_PREFIX } from '@/hooks/usePagination';
 
@@ -111,6 +112,52 @@ function MembersSection() {
 		}
 	};
 
+	const loginUrl =
+		addedUserEmail && oneTimePassword
+			? `${window.location.origin}${RouteNames.auth}?email=${encodeURIComponent(addedUserEmail)}&password=${encodeURIComponent(oneTimePassword)}`
+			: '';
+
+	const handleCopyLoginLink = async () => {
+		if (!loginUrl) return;
+		try {
+			await navigator.clipboard.writeText(loginUrl);
+			toast.success('Login link copied – share it securely with the user.');
+		} catch {
+			toast.error('Could not copy to clipboard');
+		}
+	};
+
+	const handleCopyAll = async () => {
+		if (!addedUserEmail || !oneTimePassword) return;
+		const block = `Email: ${addedUserEmail}\nPassword: ${oneTimePassword}${loginUrl ? `\nLogin link: ${loginUrl}` : ''}`;
+		try {
+			await navigator.clipboard.writeText(block);
+			toast.success('Credentials copied to clipboard.');
+		} catch {
+			toast.error('Could not copy to clipboard');
+		}
+	};
+
+	const escapeCsvCell = (value: string) => {
+		if (/[",\r\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
+		return value;
+	};
+
+	const handleDownloadCsv = () => {
+		if (!addedUserEmail || !oneTimePassword) return;
+		const header = 'email,password,login_link';
+		const row = [escapeCsvCell(addedUserEmail), escapeCsvCell(oneTimePassword), escapeCsvCell(loginUrl)];
+		const csv = `${header}\r\n${row.join(',')}`;
+		const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `flexprice-credentials-${addedUserEmail.replace(/@.*/, '').replace(/[^a-zA-Z0-9_-]/g, '_') || 'user'}.csv`;
+		a.click();
+		URL.revokeObjectURL(url);
+		toast.success('Credentials downloaded.');
+	};
+
 	const handleClosePasswordDialog = () => {
 		setOneTimePassword(null);
 		setAddedUserEmail(null);
@@ -201,38 +248,53 @@ function MembersSection() {
 				</div>
 			</Dialog>
 
-			{/* Login credentials dialog */}
+			{/* Login credentials dialog – premium minimal */}
 			<Dialog
 				isOpen={passwordDialogOpen}
 				onOpenChange={(open) => (open ? setPasswordDialogOpen(true) : handleClosePasswordDialog())}
 				title='Login Credentials'
-				className='w-full max-w-[520px] rounded-xl shadow-lg border border-gray-100'>
-				<div className='space-y-5 mt-3'>
+				description='Share these with the new user so they can sign in.'
+				className='w-full max-w-[480px] rounded-xl shadow-lg border border-gray-100'>
+				<div className='space-y-4 mt-3'>
+					{/* Email row */}
 					{addedUserEmail && (
-						<div className='flex items-center gap-3 rounded-lg bg-blue-50 px-4 py-3 border border-blue-200'>
-							<Mail className='h-4 w-4 text-blue-600 flex-shrink-0' />
-							<span className='flex-1 min-w-0 text-sm font-semibold text-blue-900 truncate'>{addedUserEmail}</span>
+						<div>
+							<span className='text-xs font-medium text-zinc-500 uppercase tracking-wide'>Email</span>
+							<div className='mt-1 flex items-center gap-2 rounded-md border border-gray-200 bg-zinc-50 px-3 py-2'>
+								<Mail className='h-4 w-4 text-zinc-400 flex-shrink-0' />
+								<span className='flex-1 min-w-0 truncate text-sm text-zinc-900'>{addedUserEmail}</span>
+								<button
+									type='button'
+									onClick={() => {
+										navigator.clipboard.writeText(addedUserEmail);
+										toast.success('Email copied');
+									}}
+									className='p-1.5 text-zinc-500 hover:text-zinc-700 rounded'
+									title='Copy email'
+									aria-label='Copy email'>
+									<Copy className='h-4 w-4' />
+								</button>
+							</div>
 						</div>
 					)}
-					{/* Password: Lock on left */}
-					<div className='space-y-2'>
-						<div className='flex items-center gap-2'>
-							<Lock className='h-4 w-4 text-gray-500' />
-							<span className='text-sm font-medium text-gray-700'>Password</span>
-						</div>
-						<div className='relative bg-gray-100 rounded-md'>
+
+					{/* Password row */}
+					<div>
+						<span className='text-xs font-medium text-zinc-500 uppercase tracking-wide'>Password</span>
+						<div className='mt-1 relative flex items-center rounded-md border border-gray-200 bg-zinc-50'>
+							<Lock className='h-4 w-4 text-zinc-400 flex-shrink-0 ml-3' />
 							<Input
 								id='temp-password'
 								readOnly
 								type={showPassword ? 'text' : 'password'}
 								value={oneTimePassword ?? ''}
-								className='pr-16 border-none bg-transparent font-mono text-gray-700'
+								className='flex-1 border-0 bg-transparent font-mono text-sm text-zinc-900 py-2 pl-2 pr-24 focus-visible:ring-0'
 							/>
-							<div className='absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1'>
+							<div className='absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5'>
 								<button
 									type='button'
 									onClick={togglePasswordVisibility}
-									className='p-1 text-gray-500 hover:text-gray-700'
+									className='p-1.5 text-zinc-500 hover:text-zinc-700 rounded'
 									title={showPassword ? 'Hide password' : 'Show password'}
 									aria-label={showPassword ? 'Hide password' : 'Show password'}>
 									{showPassword ? <EyeOff className='h-4 w-4' /> : <Eye className='h-4 w-4' />}
@@ -240,7 +302,7 @@ function MembersSection() {
 								<button
 									type='button'
 									onClick={handleCopyPassword}
-									className='p-1 text-gray-500 hover:text-gray-700'
+									className='p-1.5 text-zinc-500 hover:text-zinc-700 rounded'
 									title='Copy password'
 									aria-label='Copy password'>
 									<Copy className='h-4 w-4' />
@@ -248,18 +310,46 @@ function MembersSection() {
 							</div>
 						</div>
 					</div>
-					{/* Warning (yellow): password can be reset later */}
-					<div className='flex items-center gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5'>
-						<AlertTriangle className='h-4 w-4 flex-shrink-0 text-amber-600' />
-						<span className='text-sm text-amber-900'>This password can be reset later.</span>
+
+					{/* Login link (magic link) */}
+					{loginUrl && (
+						<div className='border-t border-gray-100 pt-4'>
+							<p className='text-xs text-zinc-500 mb-2'>One-click sign-in link – share this with the user.</p>
+							<div className='flex items-center gap-2 rounded-md border border-gray-200 bg-zinc-50 px-3 py-2'>
+								<Link2 className='h-4 w-4 text-zinc-400 flex-shrink-0' />
+								<span className='flex-1 min-w-0 truncate text-sm text-zinc-600' title={loginUrl}>
+									{loginUrl.length > 44 ? `${loginUrl.slice(0, 44)}…` : loginUrl}
+								</span>
+							</div>
+						</div>
+					)}
+
+					{/* Actions: Download CSV, Copy all, Done */}
+					<div className='flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4'>
+						<Button onClick={handleCopyLoginLink} className='shrink-0'>
+							<Link2 className='h-3.5 w-3.5 mr-1.5' />
+							Copy login link
+						</Button>
+						<Button variant='outline' size='sm' onClick={handleDownloadCsv} className='shrink-0'>
+							<Download className='h-3.5 w-3.5 mr-1.5' />
+							Download CSV
+						</Button>
+						<Button variant='outline' size='sm' onClick={handleCopyAll} className='shrink-0'>
+							<Copy className='h-3.5 w-3.5 mr-1.5' />
+							Copy all
+						</Button>
 					</div>
-					{/* Info: sign in with email/password or Google */}
-					<div className='flex items-center gap-2.5 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2.5'>
-						<Info className='h-4 w-4 flex-shrink-0 text-sky-600' />
-						<span className='text-sm text-sky-900'>The user can log in using email/password or Google login.</span>
-					</div>
-					<div className='pt-2'>
-						<Button onClick={handleClosePasswordDialog}>Done</Button>
+
+					{/* Compact info */}
+					<div className='flex flex-col gap-1.5 text-xs text-zinc-500'>
+						<div className='flex items-center gap-2'>
+							<AlertTriangle className='h-3.5 w-3.5 flex-shrink-0 text-amber-500' />
+							<span>This password can be reset later.</span>
+						</div>
+						<div className='flex items-center gap-2'>
+							<Info className='h-3.5 w-3.5 flex-shrink-0 text-sky-500' />
+							<span>User can sign in with email/password or Google.</span>
+						</div>
 					</div>
 				</div>
 			</Dialog>
