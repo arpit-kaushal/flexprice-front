@@ -122,10 +122,6 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = ({ ...props }
 					title: 'Workflows',
 					url: RouteNames.workflows,
 				},
-				{
-					title: 'Paddle Checkout',
-					url: RouteNames.paddleCheckout,
-				},
 			],
 		},
 		{
