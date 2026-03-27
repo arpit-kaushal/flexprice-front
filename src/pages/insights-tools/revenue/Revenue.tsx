@@ -101,7 +101,7 @@ const Revenue = () => {
 		toNumberOrNull(summary?.total_fixed_revenue),
 		toNumberOrNull(summary?.total_usage_revenue),
 		toNumberOrNull(summary?.voice_minutes),
-		toNumberOrNull(summary?.cost_per_minute),
+		toNumberOrNull(summary?.cpm),
 	].some((value) => Number(value ?? 0) > 0);
 	const showGlobalEmpty = !isLoading && !hasRows && !hasAnyMetricData;
 
@@ -110,7 +110,7 @@ const Revenue = () => {
 		fixedContractRevenue: toNumberOrNull(summary?.total_fixed_revenue),
 		usageRevenue: toNumberOrNull(summary?.total_usage_revenue),
 		totalMinutes: toNumberOrNull(summary?.voice_minutes),
-		costPerMinute: toNumberOrNull(summary?.cost_per_minute),
+		cpm: toNumberOrNull(summary?.cpm),
 		currency: 'usd',
 	};
 
@@ -143,7 +143,7 @@ const Revenue = () => {
 									loading={isLoading}
 								/>
 								<MetricTile title='Total Minutes' value={formatInteger(normalizedSummary.totalMinutes)} loading={isLoading} />
-								<MetricTile title='Cost per Minute' value={formatDecimal(normalizedSummary.costPerMinute)} loading={isLoading} isLast />
+								<MetricTile title='CPM' value={formatDecimal(normalizedSummary.cpm)} loading={isLoading} isLast />
 							</div>
 						</div>
 					</div>
@@ -174,7 +174,7 @@ const Revenue = () => {
 									<TableHead className='font-semibold text-gray-700 text-[13px]'>Fixed Contract Revenue</TableHead>
 									<TableHead className='font-semibold text-gray-700 text-[13px]'>Usage Revenue</TableHead>
 									<TableHead className='font-semibold text-gray-700 text-[13px]'>Total Minutes</TableHead>
-									<TableHead className='rounded-tr-md font-semibold text-gray-700 text-[13px]'>Cost per Minute</TableHead>
+									<TableHead className='rounded-tr-md font-semibold text-gray-700 text-[13px]'>CPM</TableHead>
 								</TableRow>
 							</TableHeader>
 							<TableBody>
@@ -189,7 +189,8 @@ const Revenue = () => {
 										</TableCell>
 										<TableCell className='py-2.5 font-semibold text-gray-700 text-[13px]'>
 											{formatCurrency(
-												(toNumberOrNull(row.total_usage_revenue) ?? 0) + (toNumberOrNull(row.total_fixed_revenue) ?? 0),
+												toNumberOrNull(row.total_revenue) ??
+													(toNumberOrNull(row.total_usage_revenue) ?? 0) + (toNumberOrNull(row.total_fixed_revenue) ?? 0),
 												normalizedSummary.currency,
 											)}
 										</TableCell>
@@ -202,9 +203,7 @@ const Revenue = () => {
 										<TableCell className='py-2.5 font-normal text-gray-600 text-[13px]'>
 											{formatInteger(toNumberOrNull(row.voice_minutes))}
 										</TableCell>
-										<TableCell className='py-2.5 font-normal text-gray-600 text-[13px]'>
-											{formatDecimal(toNumberOrNull(row.cost_per_minute))}
-										</TableCell>
+										<TableCell className='py-2.5 font-normal text-gray-600 text-[13px]'>{formatDecimal(toNumberOrNull(row.cpm))}</TableCell>
 									</TableRow>
 								))}
 								{items.length === 0 && (
