@@ -331,9 +331,6 @@ export interface CreateSubscriptionRequest {
 	// Extra line items at creation (in addition to plan prices). Each has price_id or inline price.
 	line_items?: CreateSubscriptionLineItemRequest[];
 
-	// Parent subscription ID when this subscription is a child in a hierarchy
-	parent_subscription_id?: string | null;
-
 	/** When set, creates parent/inherited child subscriptions per backend hierarchy rules. */
 	inheritance?: SubscriptionInheritanceConfig;
 }
