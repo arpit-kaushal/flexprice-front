@@ -1,5 +1,5 @@
 import { AxiosClient } from '@/core/axios/verbs';
-import { Pagination, Subscription } from '@/models';
+import { ENTITY_STATUS, Pagination, Subscription } from '@/models';
 import {
 	ListCustomersResponse,
 	CustomerResponse,
@@ -145,6 +145,7 @@ class CustomerApi {
 				offset: 0,
 				filters: [],
 				sort: [],
+				status: ENTITY_STATUS.PUBLISHED,
 			});
 		}
 

@@ -1,4 +1,4 @@
-import { Customer, CustomerEntitlement, CustomerUsage, Pagination, Metadata } from '@/models';
+import { Customer, CustomerEntitlement, CustomerUsage, Pagination, Metadata, ENTITY_STATUS } from '@/models';
 import { TypedBackendFilter, TypedBackendSort } from '../formatters/QueryBuilder';
 import { SubscriptionResponse } from './Subscription';
 
@@ -93,6 +93,7 @@ export interface CustomerFilter extends Pagination {
 export interface GetCustomerByFiltersPayload extends CustomerFilter {
 	filters?: TypedBackendFilter[];
 	sort?: TypedBackendSort[];
+	status?: ENTITY_STATUS;
 }
 
 export interface TaxRateOverride {
