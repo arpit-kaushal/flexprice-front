@@ -1,5 +1,6 @@
 import { Card, FormHeader, Page, Spacer, Chip } from '@/components/atoms';
 import { SubscriptionPauseWarning, UpcomingCreditGrantApplicationsTable } from '@/components/molecules';
+import FlexpriceTable, { ColumnData, RedirectCell } from '@/components/molecules/Table';
 import { SubscriptionPreviewLineItemTable } from '@/components/molecules/InvoiceLineItemTable';
 import SubscriptionActionButton from '@/components/organisms/Subscription/SubscriptionActionButton';
 import { getSubscriptionStatus } from '@/components/organisms/Subscription/SubscriptionTable';
@@ -9,7 +10,7 @@ import { useBreadcrumbsStore } from '@/store/useBreadcrumbsStore';
 import { CustomerApi, SubscriptionApi, TaxApi } from '@/api';
 import { formatDateShort, getCurrencySymbol } from '@/utils/common/helper_functions';
 import { useQuery } from '@tanstack/react-query';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useParams, Link } from 'react-router';
 import { INVOICE_TYPE } from '@/models/Invoice';
@@ -17,6 +18,11 @@ import { TAXRATE_ENTITY_TYPE } from '@/models/Tax';
 import TaxAssociationTable from '@/components/molecules/TaxAssociationTable';
 import { SUBSCRIPTION_STATUS } from '@/models/Subscription';
 import { Subscription as SubscriptionType } from '@/models/Subscription';
+import { EXPAND } from '@/models';
+import { DataType, FilterOperator } from '@/types/common/QueryBuilder';
+import { SubscriptionResponse } from '@/types/dto/Subscription';
+import { generateExpandQueryParams } from '@/utils/common/api_helper';
+import formatDate from '@/utils/common/format_date';
 import { BILLING_PERIOD } from '@/constants/constants';
 import { ExternalLink } from 'lucide-react';
 
@@ -136,6 +142,55 @@ const CustomerSubscriptionDetailsPage: FC = () => {
 		},
 		enabled: !!subscription_id,
 	});
+
+	const { data: inheritedSubscriptionsData } = useQuery({
+		queryKey: ['inheritedSubscriptions', subscription_id, 'plan+customer'],
+		queryFn: async () =>
+			SubscriptionApi.searchSubscriptions({
+				filters: [
+					{
+						field: 'parent_subscription_id',
+						operator: FilterOperator.EQUAL,
+						data_type: DataType.STRING,
+						value: { string: subscription_id! },
+					},
+				],
+				limit: 100,
+				offset: 0,
+				expand: generateExpandQueryParams([EXPAND.PLAN, EXPAND.CUSTOMER]),
+			}),
+		enabled: !!subscription_id && !!subscriptionDetails,
+	});
+
+	const inheritedSubscriptionRows = inheritedSubscriptionsData?.items ?? [];
+
+	const inheritedSubscriptionsColumns = useMemo<ColumnData<SubscriptionResponse>[]>(
+		() => [
+			{
+				title: 'Customer',
+				render: (row) => (
+					<RedirectCell redirectUrl={`${RouteNames.customers}/${row.customer_id}`}>{row.customer?.name ?? '—'}</RedirectCell>
+				),
+			},
+			{
+				title: 'Plan',
+				render: (row) => (
+					<RedirectCell redirectUrl={`${RouteNames.customers}/${row.customer_id}/subscription/${row.id}`}>
+						{row.plan?.name ?? '—'}
+					</RedirectCell>
+				),
+			},
+			{
+				title: 'Start date',
+				render: (row) => <span className='text-muted-foreground'>{formatDate(row.start_date)}</span>,
+			},
+			{
+				title: 'Renewal date',
+				render: (row) => <span className='text-muted-foreground'>{formatDate(row.current_period_end)}</span>,
+			},
+		],
+		[],
+	);
 
 	useEffect(() => {
 		if (subscriptionDetails?.plan?.name) {
@@ -328,6 +383,15 @@ const CustomerSubscriptionDetailsPage: FC = () => {
 				</div>
 				<Spacer className='!my-4' />
 			</Card>
+
+			{inheritedSubscriptionRows.length > 0 && (
+				<Card className='card mt-8'>
+					<FormHeader className='mb-0' title='Inherited subscriptions' variant='sub-header' titleClassName='font-semibold' />
+					<div className='mt-4 rounded-[6px] border border-gray-300'>
+						<FlexpriceTable data={inheritedSubscriptionRows} columns={inheritedSubscriptionsColumns} />
+					</div>
+				</Card>
+			)}
 
 			{subscriptionTaxAssociations?.items && subscriptionTaxAssociations.items.length > 0 && (
 				<Card className='card mt-8'>
