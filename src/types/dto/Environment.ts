@@ -14,8 +14,9 @@ export interface ListEnvironmentResponse extends Pagination {
 }
 
 export interface CloneEnvironmentPayload {
-	name: string;
-	type: ENVIRONMENT_TYPE.DEVELOPMENT | ENVIRONMENT_TYPE.PRODUCTION;
+	target_environment_id?: string;
+	name?: string;
+	type?: ENVIRONMENT_TYPE.DEVELOPMENT | ENVIRONMENT_TYPE.PRODUCTION;
 }
 
 export interface CloneEnvironmentResponse {
