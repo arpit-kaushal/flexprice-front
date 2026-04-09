@@ -3,7 +3,7 @@ import { BILLING_MODEL, BILLING_PERIOD, PRICE_ENTITY_TYPE, PRICE_TYPE, PRICE_UNI
 import { FEATURE_TYPE } from '@/models/Feature';
 import { ENTITLEMENT_ENTITY_TYPE, ENTITLEMENT_USAGE_RESET_PERIOD } from '@/models/Entitlement';
 import { METER_AGGREGATION_TYPE, METER_USAGE_RESET_PERIOD } from '@/models/Meter';
-import { ENTITY_STATUS } from '@/models';
+import { ENTITY_STATUS, type Metadata } from '@/models';
 import { CREDIT_GRANT_CADENCE, CREDIT_GRANT_EXPIRATION_TYPE, CREDIT_GRANT_PERIOD, CREDIT_GRANT_SCOPE } from '@/models/CreditGrant';
 import FeatureApi from '@/api/FeatureApi';
 import { PlanApi } from '@/api/PlanApi';
@@ -17,6 +17,9 @@ import { normalizePricingSchema } from './llm';
 // ============================================
 // Validation
 // ============================================
+
+/** Stamped on plans and features created by the AI pricing orchestrator (values must be strings per Metadata). */
+const AI_SETUP_METADATA: Metadata = { created_with_ai: 'true' };
 
 function assertValidPricingSchema(schema: PricingSchema): void {
 	if (schema.features.length === 0) {
@@ -208,6 +211,7 @@ export async function orchestrateSetup(schema: PricingSchema, onProgress?: Progr
 			name: feat.name,
 			lookup_key: feat.key,
 			type: featureType,
+			metadata: AI_SETUP_METADATA,
 			unit_singular: feat.unit_singular,
 			unit_plural: feat.unit_plural,
 			...(featureType === FEATURE_TYPE.METERED && {
@@ -259,6 +263,7 @@ export async function orchestrateSetup(schema: PricingSchema, onProgress?: Progr
 				name: plan.name,
 				description: plan.description,
 				lookup_key: planLookupKey,
+				metadata: AI_SETUP_METADATA,
 			});
 			planIdMap[plan.name] = created.id;
 		} catch {
@@ -266,6 +271,7 @@ export async function orchestrateSetup(schema: PricingSchema, onProgress?: Progr
 				name: plan.name,
 				description: plan.description,
 				lookup_key: `${planLookupKey}_${Date.now()}`,
+				metadata: AI_SETUP_METADATA,
 			});
 			planIdMap[plan.name] = created.id;
 		}
