@@ -5,7 +5,6 @@ import { buildQuantityChangeModifyRequest } from '@/utils/subscription/buildQuan
 import type { ExecuteSubscriptionModifyRequest } from '@/types/dto/Subscription';
 import type { FC } from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
 import SubscriptionModifyPreviewSummary from './SubscriptionModifyPreviewSummary';
 import formatDate from '@/utils/common/format_date';
 import {
@@ -152,9 +151,9 @@ const SubscriptionLineItemQuantityModifyDialog: FC<SubscriptionLineItemQuantityM
 					</span>
 				) : undefined
 			}
-			className={cn('sm:max-w-[560px]', step === 'preview' && 'sm:max-w-[640px]')}
+			className='sm:max-w-[560px]'
 			showCloseButton={!busy}>
-			<div className={step === 'preview' ? 'space-y-5' : 'space-y-6'}>
+			<div className={step === 'preview' ? 'space-y-4' : 'space-y-6'}>
 				{step === 'form' && (
 					<>
 						<div className='space-y-2'>
@@ -205,7 +204,7 @@ const SubscriptionLineItemQuantityModifyDialog: FC<SubscriptionLineItemQuantityM
 								currency: lineItem.currency || 'USD',
 							}}
 						/>
-						<div className='flex justify-end gap-3 border-t border-gray-100 pt-5'>
+						<div className='flex justify-end gap-3 border-t border-gray-100 pt-4'>
 							<Button variant='outline' onClick={handleBack} disabled={busy}>
 								Back
 							</Button>
