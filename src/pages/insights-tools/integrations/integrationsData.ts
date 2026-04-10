@@ -174,8 +174,7 @@ export const integrations: Integration[] = [
 	{
 		name: 'Zoho',
 		logo: 'https://www.zohowebstatic.com/sites/zweb/images/commonroot/zoho-logo-web.svg',
-		tags: ['CRM', 'Accounting'],
-		premium: true,
+		tags: ['Accounting', 'Invoices'],
 		type: 'available',
 		description: 'The Zoho Books integration lets you manage critical accounting tasks directly from Flexprice. ',
 		info: [
