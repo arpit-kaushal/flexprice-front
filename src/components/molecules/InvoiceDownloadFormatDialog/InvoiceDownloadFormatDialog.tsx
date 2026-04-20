@@ -1,6 +1,8 @@
 import Dialog from '@/components/atoms/Dialog/Dialog';
 import { cn } from '@/lib/utils';
-import { FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { FaFileExcel } from 'react-icons/fa';
+import { SiAdobeacrobatreader } from 'react-icons/si';
 import { FC } from 'react';
 
 export interface InvoiceDownloadFormatDialogProps {
@@ -51,11 +53,21 @@ const InvoiceDownloadFormatDialog: FC<InvoiceDownloadFormatDialogProps> = ({
 					disabled={busy}
 					onClick={() => void handlePdf()}
 					className={cn(
-						'flex flex-col items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-8 text-center transition-colors',
-						'hover:bg-zinc-100 hover:border-zinc-300',
+						'flex flex-col items-center justify-center gap-3 rounded-xl border border-zinc-200/90 bg-gradient-to-b from-white to-rose-50/40 px-4 py-8 text-center transition-all',
+						'hover:border-rose-200 hover:from-rose-50/30 hover:to-rose-50/60 hover:shadow-sm',
 						'disabled:opacity-50 disabled:cursor-not-allowed',
 					)}>
-					{isPdfPending ? <Loader2 className='h-8 w-8 animate-spin text-zinc-600' /> : <FileText className='h-8 w-8 text-zinc-700' />}
+					<span
+						className={cn(
+							'flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-400/25 via-red-500/20 to-red-600/30 shadow-inner',
+							'ring-1 ring-inset ring-red-500/15',
+						)}>
+						{isPdfPending ? (
+							<Loader2 className='h-8 w-8 animate-spin text-red-600' aria-hidden />
+						) : (
+							<SiAdobeacrobatreader className='h-10 w-10 text-[#EC1C24] drop-shadow-sm' aria-hidden />
+						)}
+					</span>
 					<span className='text-sm font-medium text-zinc-900'>PDF</span>
 				</button>
 				<button
@@ -63,15 +75,21 @@ const InvoiceDownloadFormatDialog: FC<InvoiceDownloadFormatDialogProps> = ({
 					disabled={busy}
 					onClick={() => void handleCsv()}
 					className={cn(
-						'flex flex-col items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-8 text-center transition-colors',
-						'hover:bg-zinc-100 hover:border-zinc-300',
+						'flex flex-col items-center justify-center gap-3 rounded-xl border border-zinc-200/90 bg-gradient-to-b from-white to-emerald-50/40 px-4 py-8 text-center transition-all',
+						'hover:border-emerald-200 hover:from-emerald-50/30 hover:to-emerald-50/60 hover:shadow-sm',
 						'disabled:opacity-50 disabled:cursor-not-allowed',
 					)}>
-					{isCsvPending ? (
-						<Loader2 className='h-8 w-8 animate-spin text-zinc-600' />
-					) : (
-						<FileSpreadsheet className='h-8 w-8 text-zinc-700' />
-					)}
+					<span
+						className={cn(
+							'flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400/25 via-teal-500/20 to-teal-600/30 shadow-inner',
+							'ring-1 ring-inset ring-emerald-500/15',
+						)}>
+						{isCsvPending ? (
+							<Loader2 className='h-8 w-8 animate-spin text-emerald-600' aria-hidden />
+						) : (
+							<FaFileExcel className='h-10 w-10 text-[#217346] drop-shadow-sm' aria-hidden />
+						)}
+					</span>
 					<span className='text-sm font-medium text-zinc-900'>CSV</span>
 				</button>
 			</div>
