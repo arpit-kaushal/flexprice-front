@@ -3,7 +3,7 @@ import { Invoice } from '@/models';
 import { generateQueryParams } from '@/utils/common/api_helper';
 import AuthService from '@/core/auth/AuthService';
 import EnvironmentApi from '@/api/EnvironmentApi';
-import { SortDirection } from '@/types/common/QueryBuilder';
+import { FilterOperator, SortDirection } from '@/types/common/QueryBuilder';
 import {
 	GetInvoicesResponse,
 	InvoiceFilter,
@@ -28,8 +28,12 @@ class InvoiceApi {
 	public static async getCustomerInvoices(customerId: string): Promise<GetInvoicesResponse> {
 		return await this.listInvoices({
 			customer_id: customerId,
-			sort_field: 'period_start',
-			order: SortDirection.ASC,
+			sort: [
+				{
+					field: 'period_start',
+					direction: SortDirection.DESC,
+				},
+			],
 		});
 	}
 
