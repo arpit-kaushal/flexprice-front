@@ -358,7 +358,7 @@ const SubscriptionAddonsSection: FC<SubscriptionAddonsSectionProps> = ({ subscri
 
 			{/* Cancel Addon Dialog */}
 			<Dialog
-				title={`Cancel addon "${addonNameToCancel}"?`}
+				title={`Cancel "${addonNameToCancel}"?`}
 				description='Optionally schedule an effective end date and choose proration behavior.'
 				titleClassName='text-lg font-normal text-gray-800'
 				isOpen={isCancelDialogOpen}
@@ -370,40 +370,42 @@ const SubscriptionAddonsSection: FC<SubscriptionAddonsSectionProps> = ({ subscri
 				}}
 				showCloseButton={false}>
 				<div className='space-y-5'>
-					<div className='rounded-xl border border-gray-200 p-4 space-y-3'>
-						<div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+					<div className='space-y-3'>
+						<div className='gap-3'>
 							<DatePicker
-								label='Effective end date (optional)'
+								label='Effective end date'
 								placeholder='End date'
 								date={effectiveEndDate}
 								setDate={setEffectiveEndDate}
 								className='w-full'
+								minDate={subscriptionDetails?.current_period_start ? new Date(subscriptionDetails.current_period_start) : undefined}
+								maxDate={subscriptionDetails?.current_period_end ? new Date(subscriptionDetails.current_period_end) : undefined}
 								popoverTriggerClassName='w-full'
 							/>
 							<Select
-								label='Proration (optional)'
+								label='Proration'
 								placeholder='Default'
 								options={[
 									{
-										label: 'Prorate',
+										label: 'Create prorations',
 										value: ADDON_PRORATION_BEHAVIOR.CREATE_PRORATIONS,
 										description: 'Creates proration credits/charges.',
 									},
-									{ label: 'No proration', value: ADDON_PRORATION_BEHAVIOR.NONE, description: 'No proration adjustments.' },
+									{ label: 'None', value: ADDON_PRORATION_BEHAVIOR.NONE, description: 'No proration adjustments.' },
 								]}
 								value={cancelProrationBehavior}
 								onChange={(v) => setCancelProrationBehavior(v as ADDON_PRORATION_BEHAVIOR)}
 							/>
 						</div>
-						<p className='text-xs text-gray-500'>Leave empty to cancel immediately. Pick a future date to schedule cancellation.</p>
+						<p className='text-xs text-gray-500'>Leave empty to cancel at period end. Pick a future date to schedule cancellation.</p>
 					</div>
 
 					<div className='flex justify-end gap-3'>
 						<Button variant='outline' onClick={closeCancelDialog} disabled={isCancellingAddon}>
-							Keep addon
+							Keep
 						</Button>
 						<Button variant='destructive' onClick={confirmCancel} disabled={isCancellingAddon}>
-							{isCancellingAddon ? 'Cancelling...' : 'Cancel addon'}
+							{isCancellingAddon ? 'Cancelling...' : 'Cancel'}
 						</Button>
 					</div>
 				</div>
