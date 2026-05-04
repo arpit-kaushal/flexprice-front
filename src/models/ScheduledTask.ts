@@ -33,6 +33,11 @@ export interface ScheduledTaskJobConfig {
 	compression?: string;
 	encryption?: string;
 	max_file_size_mb?: number;
+	export_metadata_fields?: Array<{
+		entity_type: 'customer' | 'wallet';
+		field_key: string;
+		column_name?: string;
+	}>;
 	endpoint_url?: string;
 	use_path_style?: boolean;
 }

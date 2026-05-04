@@ -1,10 +1,12 @@
-import { FC, useState, useEffect } from 'react';
-import { Button, Input, Sheet, Spacer, Select } from '@/components/atoms';
+import { FC, useMemo, useState, useEffect } from 'react';
+import { Button, Input, Sheet, Spacer, Select, Textarea, Tooltip } from '@/components/atoms';
 import { useMutation } from '@tanstack/react-query';
 import { TaskApi } from '@/api';
 import { ScheduledTask, SCHEDULED_ENTITY_TYPE, SCHEDULED_TASK_INTERVAL } from '@/models';
 import { CreateScheduledTaskPayload } from '@/types/dto';
 import toast from 'react-hot-toast';
+import { ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { getApiErrorMessage } from '@/core/axios/types';
 
 interface ExportDrawerProps {
 	isOpen: boolean;
@@ -24,6 +26,7 @@ interface ExportFormData {
 	key_prefix: string;
 	compression: string;
 	encryption: string;
+	export_metadata_fields_json: string;
 	endpoint_url: string;
 	use_path_style: boolean;
 }
@@ -34,6 +37,7 @@ interface ValidationErrors {
 	bucket?: string;
 	region?: string;
 	key_prefix?: string;
+	export_metadata_fields_json?: string;
 }
 
 const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionId, connection, exportTask, onSave }) => {
@@ -49,11 +53,13 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 		key_prefix: 'flexprice-exports',
 		compression: 'none',
 		encryption: 'AES256',
+		export_metadata_fields_json: '',
 		endpoint_url: '',
 		use_path_style: true,
 	});
 
 	const [errors, setErrors] = useState<ValidationErrors>({});
+	const [isMetadataExpanded, setIsMetadataExpanded] = useState(false);
 
 	// Initialize form data when editing
 	useEffect(() => {
@@ -67,6 +73,9 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 				key_prefix: exportTask.job_config.key_prefix,
 				compression: exportTask.job_config.compression || 'none',
 				encryption: exportTask.job_config.encryption || 'AES256',
+				export_metadata_fields_json: exportTask.job_config.export_metadata_fields
+					? JSON.stringify(exportTask.job_config.export_metadata_fields, null, 2)
+					: '',
 				endpoint_url: exportTask.job_config.endpoint_url || '',
 				use_path_style: exportTask.job_config.use_path_style ?? true,
 			});
@@ -80,11 +89,13 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 				key_prefix: 'flexprice-exports',
 				compression: 'none',
 				encryption: 'AES256',
+				export_metadata_fields_json: '',
 				endpoint_url: '',
 				use_path_style: true,
 			});
 		}
 		setErrors({});
+		setIsMetadataExpanded(false);
 	}, [exportTask, isOpen]);
 
 	const handleChange = (field: keyof ExportFormData, value: string | number | boolean) => {
@@ -104,6 +115,20 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 		}
 	};
 
+	const parsedExportMetadataFields = useMemo(() => {
+		if (formData.entity_type !== SCHEDULED_ENTITY_TYPE.CREDIT_USAGE) return { ok: true as const, value: undefined as any };
+		const raw = formData.export_metadata_fields_json?.trim();
+		if (!raw) return { ok: true as const, value: undefined as any };
+
+		try {
+			const v = JSON.parse(raw);
+			if (!Array.isArray(v)) return { ok: false as const, error: 'Must be a JSON array' };
+			return { ok: true as const, value: v };
+		} catch {
+			return { ok: false as const, error: 'Invalid JSON' };
+		}
+	}, [formData.entity_type, formData.export_metadata_fields_json]);
+
 	const validateForm = (): boolean => {
 		const newErrors: ValidationErrors = {};
 
@@ -122,6 +147,10 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 			}
 		}
 
+		if (formData.entity_type === SCHEDULED_ENTITY_TYPE.CREDIT_USAGE && !parsedExportMetadataFields.ok) {
+			newErrors.export_metadata_fields_json = parsedExportMetadataFields.error;
+		}
+
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;
 	};
@@ -132,6 +161,14 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 				compression: formData.compression,
 				encryption: formData.encryption,
 			};
+
+			if (
+				formData.entity_type === SCHEDULED_ENTITY_TYPE.CREDIT_USAGE &&
+				parsedExportMetadataFields.ok &&
+				parsedExportMetadataFields.value
+			) {
+				jobConfig.export_metadata_fields = parsedExportMetadataFields.value;
+			}
 
 			// Only include bucket/region/key_prefix for customer-owned S3
 			if (!isFlexpriceManaged) {
@@ -162,7 +199,14 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 			onOpenChange(false);
 		},
 		onError: (error: any) => {
-			toast.error(error?.message || 'Failed to create export task');
+			const apiMessage = getApiErrorMessage(error?.response?.data ?? error, 'Failed to create export task');
+			toast.error(apiMessage);
+
+			const code = error?.response?.data?.code;
+			if (code === 'validation_error' && typeof apiMessage === 'string' && apiMessage.toLowerCase().includes('export metadata field')) {
+				setErrors((prev) => ({ ...prev, export_metadata_fields_json: apiMessage }));
+				setIsMetadataExpanded(true);
+			}
 		},
 	});
 
@@ -172,6 +216,14 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 				compression: formData.compression,
 				encryption: formData.encryption,
 			};
+
+			if (
+				formData.entity_type === SCHEDULED_ENTITY_TYPE.CREDIT_USAGE &&
+				parsedExportMetadataFields.ok &&
+				parsedExportMetadataFields.value
+			) {
+				jobConfig.export_metadata_fields = parsedExportMetadataFields.value;
+			}
 
 			// Only include bucket/region/key_prefix for customer-owned S3
 			if (!isFlexpriceManaged) {
@@ -202,7 +254,14 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 			onOpenChange(false);
 		},
 		onError: (error: any) => {
-			toast.error(error?.message || 'Failed to update export task');
+			const apiMessage = getApiErrorMessage(error?.response?.data ?? error, 'Failed to update export task');
+			toast.error(apiMessage);
+
+			const code = error?.response?.data?.code;
+			if (code === 'validation_error' && typeof apiMessage === 'string' && apiMessage.toLowerCase().includes('export metadata field')) {
+				setErrors((prev) => ({ ...prev, export_metadata_fields_json: apiMessage }));
+				setIsMetadataExpanded(true);
+			}
 		},
 	});
 
@@ -290,15 +349,6 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 							error={errors.key_prefix}
 							description='The prefix for files in your S3 bucket'
 						/>
-
-						{/* Endpoint URL */}
-						<Input
-							label='Endpoint URL (Optional)'
-							placeholder='Enter custom S3 endpoint URL'
-							value={formData.endpoint_url}
-							onChange={(value) => handleChange('endpoint_url', value)}
-							description='Custom endpoint URL for S3-compatible storage (e.g., MinIO, DigitalOcean Spaces)'
-						/>
 					</>
 				)}
 
@@ -326,6 +376,66 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 					/>
 					<p className='text-xs text-gray-500 mt-1'>Encryption method for exported files</p>
 				</div>
+
+				{/* Additional Metadata Fields (Credit Usage only) */}
+				{formData.entity_type === SCHEDULED_ENTITY_TYPE.CREDIT_USAGE && (
+					<div className='rounded-md border border-gray-200 bg-gray-50'>
+						<button
+							type='button'
+							onClick={() => setIsMetadataExpanded((v) => !v)}
+							className='w-full flex items-center justify-between px-3 py-2 text-left'>
+							<div>
+								<div className='text-sm font-medium text-gray-900 inline-flex items-center gap-1.5'>
+									Additional metadata fields (Optional)
+									<Tooltip
+										delayDuration={0}
+										side='right'
+										content={
+											<div className='max-w-[280px] text-sm'>
+												If the same metadata key exists for both <span className='font-medium'>customer</span> and{' '}
+												<span className='font-medium'>wallet</span>, set <span className='font-medium'>column_name</span> to distinguish the
+												CSV headers.
+											</div>
+										}>
+										<span className='inline-flex items-center text-blue-600 hover:text-blue-700'>
+											<Info className='h-4 w-4' />
+										</span>
+									</Tooltip>
+								</div>
+								<div className='text-xs text-gray-600'>
+									JSON array describing which Customer/Wallet metadata keys to export as CSV columns in the exported file.
+								</div>
+							</div>
+							<div className='text-gray-700'>
+								{isMetadataExpanded ? <ChevronDown className='h-4 w-4' /> : <ChevronRight className='h-4 w-4' />}
+							</div>
+						</button>
+						{isMetadataExpanded && (
+							<div className='px-3 pb-3'>
+								<Textarea
+									label=''
+									placeholder={`[\n  { "entity_type": "customer", "field_key": "account_number__c", "column_name": "Account Number" },\n  { "entity_type": "wallet", "field_key": "tier" }\n]`}
+									value={formData.export_metadata_fields_json}
+									onChange={(value) => handleChange('export_metadata_fields_json', value)}
+									error={errors.export_metadata_fields_json}
+									description='Format: [{ "entity_type": "…", "field_key": "…", "column_name"?: "…" }]'
+									textAreaClassName='font-mono text-xs'
+								/>
+							</div>
+						)}
+					</div>
+				)}
+
+				{/* Endpoint URL (Optional) - only for customer-owned S3 */}
+				{!isFlexpriceManaged && (
+					<Input
+						label='Endpoint URL (Optional)'
+						placeholder='Enter custom S3 endpoint URL'
+						value={formData.endpoint_url}
+						onChange={(value) => handleChange('endpoint_url', value)}
+						description='Custom endpoint URL for S3-compatible storage (e.g., MinIO, DigitalOcean Spaces)'
+					/>
+				)}
 
 				{/* Flexprice Managed Info */}
 				{isFlexpriceManaged && (
