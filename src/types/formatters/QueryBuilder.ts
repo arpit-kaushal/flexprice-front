@@ -182,34 +182,41 @@ export interface ExtractMetadataFromTypedFiltersResult {
 }
 
 /**
- * Pulls customer-style metadata out of a typed filter array: any filter whose `field`
- * is {@link METADATA_TYPED_FILTER_FIELD} is removed, and its `value.string` (JSON array
- * of `{ key, value }`) is merged into a single `metadata` object.
+ * Pulls customer-style metadata out of a typed filter array: every filter whose `field`
+ * is {@link METADATA_TYPED_FILTER_FIELD} is removed, and each `value.string` (JSON array
+ * of `{ key, value }`) is merged into a single `metadata` object (later entries override
+ * duplicate keys).
  */
 export const extractMetadataFromTypedFilters = (
 	filters: TypedBackendFilter[] | undefined | null,
 ): ExtractMetadataFromTypedFiltersResult => {
 	const list = filters ?? [];
 	const regularFilters = list.filter((f) => f.field !== METADATA_TYPED_FILTER_FIELD);
-	const metadataFilter = list.find((f) => f.field === METADATA_TYPED_FILTER_FIELD);
-	const raw = metadataFilter?.value?.string?.trim();
-	if (!raw) return { filters: regularFilters };
+	const metadataFilters = list.filter((f) => f.field === METADATA_TYPED_FILTER_FIELD);
+	const obj: Record<string, string> = {};
 
-	try {
-		const pairs: unknown = JSON.parse(raw);
-		if (!Array.isArray(pairs)) return { filters: regularFilters };
-		const obj: Record<string, string> = {};
-		for (const item of pairs) {
-			if (item == null || typeof item !== 'object') continue;
-			const key = 'key' in item && typeof (item as { key: unknown }).key === 'string' ? (item as { key: string }).key : '';
-			const value = 'value' in item && typeof (item as { value: unknown }).value === 'string' ? (item as { value: string }).value : '';
-			if (key.trim() && value.trim()) obj[key.trim()] = value.trim();
+	for (const metadataFilter of metadataFilters) {
+		const raw = metadataFilter?.value?.string?.trim();
+		if (!raw) continue;
+
+		try {
+			const pairs: unknown = JSON.parse(raw);
+			if (!Array.isArray(pairs)) continue;
+			for (const item of pairs) {
+				if (item == null || typeof item !== 'object') continue;
+				const key = 'key' in item && typeof (item as { key: unknown }).key === 'string' ? (item as { key: string }).key : '';
+				const value = 'value' in item && typeof (item as { value: unknown }).value === 'string' ? (item as { value: string }).value : '';
+				if (key.trim() && value.trim()) obj[key.trim()] = value.trim();
+			}
+		} catch {
+			// Invalid JSON for this pseudo-filter only; continue merging other entries.
 		}
-		if (Object.keys(obj).length === 0) return { filters: regularFilters };
-		return { filters: regularFilters, metadata: obj };
-	} catch {
+	}
+
+	if (Object.keys(obj).length === 0) {
 		return { filters: regularFilters };
 	}
+	return { filters: regularFilters, metadata: obj };
 };
 
 /**
