@@ -40,6 +40,10 @@ interface ValidationErrors {
 	export_metadata_fields_json?: string;
 }
 
+function scheduledEntityTypeSupportsExportMetadataFields(entityType: SCHEDULED_ENTITY_TYPE): boolean {
+	return entityType === SCHEDULED_ENTITY_TYPE.CREDIT_USAGE || entityType === SCHEDULED_ENTITY_TYPE.USAGE_ANALYTICS;
+}
+
 const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionId, connection, exportTask, onSave }) => {
 	// Check if this is a Flexprice-managed connection
 	const isFlexpriceManaged = connection?.sync_config?.s3?.is_flexprice_managed || false;
@@ -116,7 +120,7 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 	};
 
 	const parsedExportMetadataFields = useMemo(() => {
-		if (formData.entity_type !== SCHEDULED_ENTITY_TYPE.CREDIT_USAGE) return { ok: true as const, value: undefined as any };
+		if (!scheduledEntityTypeSupportsExportMetadataFields(formData.entity_type)) return { ok: true as const, value: undefined as any };
 		const raw = formData.export_metadata_fields_json?.trim();
 		if (!raw) return { ok: true as const, value: undefined as any };
 
@@ -147,7 +151,7 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 			}
 		}
 
-		if (formData.entity_type === SCHEDULED_ENTITY_TYPE.CREDIT_USAGE && !parsedExportMetadataFields.ok) {
+		if (scheduledEntityTypeSupportsExportMetadataFields(formData.entity_type) && !parsedExportMetadataFields.ok) {
 			newErrors.export_metadata_fields_json = parsedExportMetadataFields.error;
 		}
 
@@ -163,7 +167,7 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 			};
 
 			if (
-				formData.entity_type === SCHEDULED_ENTITY_TYPE.CREDIT_USAGE &&
+				scheduledEntityTypeSupportsExportMetadataFields(formData.entity_type) &&
 				parsedExportMetadataFields.ok &&
 				parsedExportMetadataFields.value
 			) {
@@ -218,7 +222,7 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 			};
 
 			if (
-				formData.entity_type === SCHEDULED_ENTITY_TYPE.CREDIT_USAGE &&
+				scheduledEntityTypeSupportsExportMetadataFields(formData.entity_type) &&
 				parsedExportMetadataFields.ok &&
 				parsedExportMetadataFields.value
 			) {
@@ -297,6 +301,7 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 							{ value: SCHEDULED_ENTITY_TYPE.INVOICE, label: 'Invoice' },
 							{ value: SCHEDULED_ENTITY_TYPE.CREDIT_TOPUPS, label: 'Credit Topups' },
 							{ value: SCHEDULED_ENTITY_TYPE.CREDIT_USAGE, label: 'Credit Usage' },
+							{ value: SCHEDULED_ENTITY_TYPE.USAGE_ANALYTICS, label: 'Usage Analytics' },
 						]}
 					/>
 					<p className='text-xs text-gray-500 mt-1'>Select the type of data to export</p>
@@ -377,8 +382,8 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 					<p className='text-xs text-gray-500 mt-1'>Encryption method for exported files</p>
 				</div>
 
-				{/* Additional Metadata Fields (Credit Usage only) */}
-				{formData.entity_type === SCHEDULED_ENTITY_TYPE.CREDIT_USAGE && (
+				{/* Additional metadata fields (credit usage & usage analytics exports) */}
+				{scheduledEntityTypeSupportsExportMetadataFields(formData.entity_type) && (
 					<div className='rounded-md border border-gray-200 bg-gray-50'>
 						<button
 							type='button'
@@ -403,7 +408,7 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 									</Tooltip>
 								</div>
 								<div className='text-xs text-gray-600'>
-									JSON array describing which Customer/Wallet metadata keys to export as CSV columns in the exported file.
+									JSON array describing which metadata keys to export as CSV columns in the exported file.
 								</div>
 							</div>
 							<div className='text-gray-700'>
