@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import useEnvironment from '@/hooks/useEnvironment';
 import { PREFETCH_REGISTRY } from '@/config/prefetchConfig';
+import { preloadWebhookDashboard } from '@/pages/webhooks';
 
 const AppPrefetcher = () => {
 	const queryClient = useQueryClient();
@@ -12,6 +13,11 @@ const AppPrefetcher = () => {
 		const envId = activeEnvironment.id;
 
 		const run = () => {
+			// Preload route chunks that are likely to be visited.
+			preloadWebhookDashboard().catch(() => {
+				// Preload failures should never affect UX
+			});
+
 			for (const config of PREFETCH_REGISTRY) {
 				const key = config.queryKey(envId);
 				if (queryClient.getQueryData(key)) continue;
