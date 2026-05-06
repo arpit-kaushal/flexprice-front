@@ -2,7 +2,13 @@ import { FC, useState, useEffect } from 'react';
 import { Button, Input, Sheet, Spacer, Select, Tooltip } from '@/components/atoms';
 import { useMutation } from '@tanstack/react-query';
 import { TaskApi } from '@/api';
-import { ScheduledTask, SCHEDULED_ENTITY_TYPE, SCHEDULED_TASK_INTERVAL, EXPORT_METADATA_ENTITY_TYPE, ALLOWED_METADATA_ENTITY_TYPES } from '@/models';
+import {
+	ScheduledTask,
+	SCHEDULED_ENTITY_TYPE,
+	SCHEDULED_TASK_INTERVAL,
+	EXPORT_METADATA_ENTITY_TYPE,
+	ALLOWED_METADATA_ENTITY_TYPES,
+} from '@/models';
 import { CreateScheduledTaskPayload } from '@/types/dto';
 import toast from 'react-hot-toast';
 import { ChevronDown, ChevronRight, Info, Plus, Trash2 } from 'lucide-react';
@@ -157,7 +163,10 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 		}));
 		setExpandedColumnNames((prev) => {
 			const next = new Set<number>();
-			prev.forEach((i) => { if (i < index) next.add(i); else if (i > index) next.add(i - 1); });
+			prev.forEach((i) => {
+				if (i < index) next.add(i);
+				else if (i > index) next.add(i - 1);
+			});
 			return next;
 		});
 	};
@@ -468,8 +477,8 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 										side='right'
 										content={
 											<div className='max-w-[280px] text-sm'>
-												Export custom metadata fields as additional CSV columns. If the same field key exists on multiple
-												entity types, use <span className='font-medium'>Column Name</span> to give each a unique header.
+												Export custom metadata fields as additional CSV columns. If the same field key exists on multiple entity types, use{' '}
+												<span className='font-medium'>Column Name</span> to give each a unique header.
 											</div>
 										}>
 										<span className='inline-flex items-center text-blue-500 hover:text-blue-600'>
@@ -543,9 +552,7 @@ const ExportDrawer: FC<ExportDrawerProps> = ({ isOpen, onOpenChange, connectionI
 									);
 								})}
 
-								{errors.export_metadata_fields && (
-									<p className='text-xs text-red-500'>{errors.export_metadata_fields}</p>
-								)}
+								{errors.export_metadata_fields && <p className='text-xs text-red-500'>{errors.export_metadata_fields}</p>}
 
 								<button
 									type='button'
