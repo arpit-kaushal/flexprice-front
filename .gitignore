@@ -36,6 +36,7 @@ tsconfig.app.tsbuildinfo
 
 # build
 vite.config.js
+storybook-static
 
 
 # env files

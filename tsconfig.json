@@ -25,6 +25,7 @@
       "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
+  "exclude": ["src/components/storybook-showcase/**/*.stories.tsx", "src/components/storybook-showcase/**/*.stories.ts"],
   "references": [
     { "path": "./tsconfig.app.json" }
   ]
