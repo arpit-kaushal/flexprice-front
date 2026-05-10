@@ -1,15 +1,13 @@
 import type { ReactNode } from 'react';
 import { cn } from './lib/cn';
+import {
+	getInvoiceStatusDisplayLabel,
+	SB_INVOICE_STATUS_CODES as INV,
+	type SbInvoiceBadgeStatus,
+} from './lib/invoice-status-display-label';
 import { SbIconBan, SbIconCheckCircle, SbIconFileEdit, SbIconSkipForward } from './sb-icons';
 
-const INV = {
-	DRAFT: 'DRAFT',
-	FINALIZED: 'FINALIZED',
-	VOIDED: 'VOIDED',
-	SKIPPED: 'SKIPPED',
-} as const;
-
-export type SbInvoiceBadgeStatus = (typeof INV)[keyof typeof INV] | 'PAID' | string;
+export type { SbInvoiceBadgeStatus };
 
 export interface SbInvoiceStatusBadgeProps {
 	status: SbInvoiceBadgeStatus;
@@ -28,23 +26,24 @@ function row(label: string, icon: ReactNode, className: string) {
 
 export function SbInvoiceStatusBadge({ status }: SbInvoiceStatusBadgeProps) {
 	const key = status?.toUpperCase?.() ?? '';
+	const label = getInvoiceStatusDisplayLabel(status);
 
 	switch (key) {
 		case INV.VOIDED:
-			return row('Void', <SbIconBan className={iconClass} />, 'border-destructive/40 bg-destructive/10 text-destructive');
+			return row(label, <SbIconBan className={iconClass} />, 'border-destructive/40 bg-destructive/10 text-destructive');
 		case INV.FINALIZED:
-			return row('Finalized', <SbIconCheckCircle className={iconClass} />, 'border-chart-2/30 bg-chart-2/10 text-chart-2');
+			return row(label, <SbIconCheckCircle className={iconClass} />, 'border-chart-2/30 bg-chart-2/10 text-chart-2');
 		case INV.DRAFT:
-			return row('Draft', <SbIconFileEdit className={iconClass} />, 'border-border bg-muted/60 text-foreground');
+			return row(label, <SbIconFileEdit className={iconClass} />, 'border-border bg-muted/60 text-foreground');
 		case INV.SKIPPED:
 			return row(
-				'Skipped',
+				label,
 				<SbIconSkipForward className={iconClass} />,
 				'border-blue/35 bg-blue-light text-blue dark:border-blue/40 dark:bg-blue/10 dark:text-blue',
 			);
 		case 'PAID':
-			return row('Paid', <SbIconCheckCircle className={iconClass} />, 'border-chart-2/30 bg-chart-2/10 text-chart-2');
+			return row(label, <SbIconCheckCircle className={iconClass} />, 'border-chart-2/30 bg-chart-2/10 text-chart-2');
 		default:
-			return row(status ? String(status) : 'Unknown', <SbIconFileEdit className={iconClass} />, 'border-border bg-muted/40');
+			return row(label, <SbIconFileEdit className={iconClass} />, 'border-border bg-muted/40');
 	}
 }

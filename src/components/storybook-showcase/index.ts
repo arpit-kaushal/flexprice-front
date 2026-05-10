@@ -21,6 +21,7 @@ export { SbSearchBar, type SbSearchBarProps } from './sb-search-bar';
 export { SbMetricCard, type SbMetricCardProps } from './sb-metric-card';
 export { SbUsageMeterProgress, type SbUsageMeterProgressProps } from './sb-usage-meter-progress';
 export { SbInvoiceStatusBadge, type SbInvoiceBadgeStatus, type SbInvoiceStatusBadgeProps } from './sb-invoice-status-badge';
+export { getInvoiceStatusDisplayLabel } from './lib/invoice-status-display-label';
 export { SbPricingTierTable, type SbPricingTierRow, type SbPricingTierTableProps } from './sb-pricing-tier-table';
 export { SbEmptyState, type SbEmptyStateProps } from './sb-empty-state';
 export { SbLoadingState } from './sb-loading-state';
