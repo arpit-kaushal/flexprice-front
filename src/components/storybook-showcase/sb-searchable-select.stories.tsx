@@ -17,13 +17,28 @@ const meta: Meta<typeof SbSearchableSelect> = {
 	component: SbSearchableSelect,
 	tags: ['autodocs'],
 	decorators: storyChromeDecorators,
-	parameters: { layout: 'padded' },
 	args: {
 		options: OPTIONS,
 		label: 'Associated meter',
 		placeholder: 'Choose…',
 		searchPlaceholder: 'Filter…',
 		disabled: false,
+		error: '',
+	},
+	argTypes: {
+		label: { control: 'text' },
+		placeholder: { control: 'text' },
+		searchPlaceholder: { control: 'text' },
+		disabled: { control: 'boolean' },
+		error: { control: 'text' },
+	},
+	parameters: {
+		layout: 'padded',
+		docs: {
+			description: {
+				component: 'Command-palette style single select. **WithSearchFiltering** proves listbox + echo readout.',
+			},
+		},
 	},
 };
 
@@ -32,9 +47,13 @@ type Story = StoryObj<typeof SbSearchableSelect>;
 
 function Playground(props: ComponentProps<typeof SbSearchableSelect>) {
 	const [v, setV] = useState<string>();
+	const err = typeof props.error === 'string' && props.error.length ? props.error : undefined;
 	return (
-		<div className='w-[320px]'>
-			<SbSearchableSelect {...props} value={v} onChange={setV} />
+		<div className='w-[320px] space-y-2'>
+			<SbSearchableSelect {...props} error={err} value={v} onChange={setV} />
+			<p className='text-xs text-muted-foreground' data-testid='select-echo' aria-live='polite'>
+				Chosen value: <span className='font-mono text-foreground'>{v ?? '(none)'}</span>
+			</p>
 		</div>
 	);
 }
@@ -55,8 +74,11 @@ export const Variants: Story = {
 function WithSearchFilteringDemo() {
 	const [v, setV] = useState<string>();
 	return (
-		<div className='w-[320px]'>
+		<div className='w-[320px] space-y-2'>
 			<SbSearchableSelect options={OPTIONS} value={v} onChange={setV} placeholder='Choose…' label='SKU' searchPlaceholder='Filter…' />
+			<p className='text-xs text-muted-foreground' data-testid='select-echo' aria-live='polite'>
+				Chosen value: <span className='font-mono text-foreground'>{v ?? '(none)'}</span>
+			</p>
 		</div>
 	);
 }
@@ -69,5 +91,7 @@ export const WithSearchFiltering: Story = {
 		const overlay = within(document.body);
 		await userEvent.type(overlay.getByPlaceholderText('Filter…'), 'gamma');
 		await expect(overlay.getByText('Gamma SKU')).toBeVisible();
+		await userEvent.click(overlay.getByText('Gamma SKU'));
+		await expect(canvas.getByTestId('select-echo')).toHaveTextContent(/gamma/);
 	},
 };

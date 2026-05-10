@@ -11,8 +11,20 @@ const meta: Meta<typeof SbLabel> = {
 	component: SbLabel,
 	tags: ['autodocs'],
 	decorators: storyChromeDecorators,
+	argTypes: {
+		label: { control: 'text' },
+		htmlFor: { control: 'text' },
+		disabled: { control: 'boolean' },
+	},
 	args: { label: 'Invoice memo', htmlFor: 'memo-field' },
-	parameters: { layout: 'padded' },
+	parameters: {
+		layout: 'padded',
+		docs: {
+			description: {
+				component: 'Use with matching `SbInput` ids. **FocusInputFromLabel** verifies pointer + typing flows.',
+			},
+		},
+	},
 };
 
 export default meta;
@@ -64,5 +76,7 @@ export const FocusInputFromLabel: Story = {
 		await userEvent.click(canvas.getByText(/click label to focus input/i));
 		const input = canvas.getByRole('textbox');
 		await expect(input).toHaveFocus();
+		await userEvent.type(input, 'PR-884');
+		await expect(input).toHaveValue('PR-884');
 	},
 };

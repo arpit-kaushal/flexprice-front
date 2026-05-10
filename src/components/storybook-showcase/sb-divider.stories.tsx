@@ -1,5 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { expect, userEvent, within } from '@storybook/test';
+import { useState } from 'react';
 import { storyChromeDecorators } from './preview-decorator';
+import { SbButton } from './sb-button';
 import { SbDivider } from './sb-divider';
 
 const meta: Meta<typeof SbDivider> = {
@@ -13,7 +16,14 @@ const meta: Meta<typeof SbDivider> = {
 		color: { control: 'text' },
 	},
 	args: { width: '100%', alignment: 'center', color: 'hsl(var(--border))' },
-	parameters: { layout: 'padded' },
+	parameters: {
+		layout: 'padded',
+		docs: {
+			description: {
+				component: 'Token-colored horizontal rules. **InteractCycleAlignment** proves layout changes are visible.',
+			},
+		},
+	},
 };
 
 export default meta;
@@ -38,4 +48,32 @@ export const Variants: Story = {
 			</div>
 		</div>
 	),
+};
+
+function DividerCycleDemo() {
+	const order = ['center', 'left', 'right'] as const;
+	const [i, setI] = useState(0);
+	const alignment = order[i % order.length]!;
+	const label = alignment.toUpperCase();
+	return (
+		<div className='mx-auto max-w-md space-y-3'>
+			<SbButton type='button' variant='outline' size='sm' onClick={() => setI((v) => v + 1)}>
+				Cycle alignment
+			</SbButton>
+			<p className='text-sm font-semibold tabular-nums' role='status' aria-live='polite'>
+				Alignment: <span data-testid='divider-flag'>{label}</span>
+			</p>
+			<SbDivider alignment={alignment} width={alignment === 'center' ? '100%' : '70%'} />
+		</div>
+	);
+}
+
+export const InteractCycleAlignment: Story = {
+	render: () => <DividerCycleDemo />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByTestId('divider-flag')).toHaveTextContent('CENTER');
+		await userEvent.click(canvas.getByRole('button', { name: /cycle alignment/i }));
+		await expect(canvas.getByTestId('divider-flag')).toHaveTextContent('LEFT');
+	},
 };

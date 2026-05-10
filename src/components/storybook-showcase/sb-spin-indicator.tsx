@@ -2,11 +2,9 @@ import * as React from 'react';
 import { cn } from './lib/cn';
 
 export interface SbSpinIndicatorProps extends React.SVGAttributes<SVGSVGElement> {
-	/** Pixel size (width and height). */
 	size?: number;
 }
 
-/** Inline loading spinner — SVG + Tailwind spin, no icon font / Lucide. */
 export function SbSpinIndicator({ className, size = 16, ...props }: SbSpinIndicatorProps) {
 	return (
 		<svg

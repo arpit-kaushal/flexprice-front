@@ -13,7 +13,7 @@ export { SbBadge } from './sb-badge';
 export { SbTooltip, SbTooltipContent, SbTooltipProvider, SbTooltipTrigger } from './sb-tooltip';
 export { SbDateRangePicker } from './sb-date-range-picker';
 export { SbSearchableSelect, type SbSelectOption } from './sb-searchable-select';
-export { SbDataTable, type SbTableColumn } from './sb-data-table';
+export { SbDataTable, type SbDataTableVirtualizeOptions, type SbTableColumn } from './sb-data-table';
 export { SbSortDropdown, type SbSortDirection, type SbSortDropdownField, type SbSortOption } from './sb-sort-dropdown';
 export { SbSkeleton } from './sb-skeleton';
 

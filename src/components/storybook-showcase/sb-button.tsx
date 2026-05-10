@@ -32,7 +32,6 @@ export interface SbButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElem
 
 export const SbButton = React.forwardRef<HTMLButtonElement, SbButtonProps>(
 	({ className, variant, size, asChild = false, isLoading, disabled, children, ...props }, ref) => {
-		// SbSlot merges onto one child; loading adds a second node — fall back to <button> while loading.
 		const useSlot = Boolean(asChild && !isLoading);
 		const Comp = useSlot ? SbSlot : 'button';
 		return (

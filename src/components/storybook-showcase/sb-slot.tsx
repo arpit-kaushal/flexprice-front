@@ -36,9 +36,6 @@ export type SbSlotProps = {
 	children?: React.ReactNode;
 } & UnknownRecord;
 
-/**
- * Merges props onto a single child element (same idea as Radix Slot, implemented locally for the showcase).
- */
 export const SbSlot = React.forwardRef<unknown, SbSlotProps>(function SbSlot({ children, ...slotProps }, forwardedRef) {
 	if (!React.isValidElement(children)) {
 		throw new Error('SbSlot requires a single valid React element child.');

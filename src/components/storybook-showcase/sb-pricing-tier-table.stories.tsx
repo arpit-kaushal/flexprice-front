@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { expect, within } from '@storybook/test';
 import { storyChromeDecorators } from './preview-decorator';
 import { SbPricingTierTable, type SbPricingTierRow } from './sb-pricing-tier-table';
 
@@ -15,7 +16,14 @@ const meta: Meta<typeof SbPricingTierTable> = {
 	decorators: storyChromeDecorators,
 	argTypes: { currencyLabel: { control: 'text' } },
 	args: { tiers, currencyLabel: 'USD' },
-	parameters: { layout: 'padded' },
+	parameters: {
+		layout: 'padded',
+		docs: {
+			description: {
+				component: 'Static graduated grid. **InteractHeader** asserts the currency label propagates to column headers.',
+			},
+		},
+	},
 };
 
 export default meta;
@@ -23,6 +31,10 @@ type Story = StoryObj<typeof SbPricingTierTable>;
 
 export const Default: Story = {
 	render: (args) => <SbPricingTierTable {...args} />,
+	play: async ({ canvasElement, args }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByText(new RegExp(`Per unit \\(${args.currencyLabel}\\)`, 'i'))).toBeVisible();
+	},
 };
 
 export const Variants: Story = {

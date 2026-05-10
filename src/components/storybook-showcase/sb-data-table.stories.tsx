@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, userEvent, within } from '@storybook/test';
-import { MemoryRouter } from 'react-router';
 import { useMemo, useState } from 'react';
+import { MemoryRouter } from 'react-router';
 import { storyChromeDecorators } from './preview-decorator';
 import { SbDataTable, type SbTableColumn } from './sb-data-table';
 import { SbSkeleton } from './sb-skeleton';
@@ -27,7 +27,15 @@ const meta: Meta = {
 	title: 'Showcase/Molecules/DataTable',
 	tags: ['autodocs'],
 	decorators: storyChromeDecorators,
-	parameters: { layout: 'padded' },
+	parameters: {
+		layout: 'padded',
+		docs: {
+			description: {
+				component:
+					'Headless-friendly table primitive + optional TanStack virtualization. Review **Variants** / **Interact** entries for UX proofs.',
+			},
+		},
+	},
 };
 
 export default meta;
@@ -129,6 +137,96 @@ export const SortableColumns: Story = {
 		await userEvent.click(canvas.getByRole('button', { name: /Metered units/i }));
 		await expect(canvas.getAllByRole('row')[1]).toHaveTextContent('Contoso SaaS');
 	},
+};
+
+const ROWS_10K: Row[] = Array.from({ length: 10_000 }, (_, i) => ({
+	id: `row-${i}`,
+	name: `Customer ${i + 1}`,
+	quantity: (i % 50) + 1,
+}));
+
+type DynRow = Row & { subtitle?: string };
+const ROWS_5K_DYN: DynRow[] = Array.from({ length: 5000 }, (_, i) => ({
+	id: `dyn-${i}`,
+	name: `Customer ${i + 1}`,
+	quantity: (i % 50) + 1,
+	subtitle: i % 10 === 0 ? `Extra context line for row ${i}\nSecond line of metadata` : undefined,
+}));
+
+function VirtualizedTenThousandDemo() {
+	const cols: SbTableColumn<Row>[] = [
+		{ id: 't', header: 'Tenant', gridTrack: '1.4fr', cell: (r) => <span>{r.name}</span> },
+		{ id: 'u', header: 'Units', align: 'right', gridTrack: '100px', cell: (r) => <span className='tabular-nums'>{r.quantity}</span> },
+	];
+	return (
+		<div className='max-w-xl space-y-2'>
+			<p className='text-sm text-muted-foreground'>
+				<code className='rounded bg-muted px-1'>10,000</code> rows with fixed{' '}
+				<code className='rounded bg-muted px-1'>estimateRowHeight</code> — no DOM measurement (
+				<code className='rounded bg-muted px-1'>measureDynamicRows: false</code>).
+			</p>
+			<SbDataTable
+				columns={cols}
+				data={ROWS_10K}
+				getRowId={(r) => r.id}
+				virtualize={{
+					estimateRowHeight: 44,
+					overscan: 12,
+					scrollContainerHeight: 420,
+					measureDynamicRows: false,
+				}}
+			/>
+		</div>
+	);
+}
+
+function VirtualizedDynamicHeightsDemo() {
+	const cols: SbTableColumn<DynRow>[] = [
+		{
+			id: 't',
+			header: 'Tenant',
+			gridTrack: '1.6fr',
+			cell: (r) =>
+				r.subtitle ? (
+					<span className='whitespace-pre-line text-left leading-snug'>
+						{r.name}
+						{'\n'}
+						<span className='text-xs text-muted-foreground'>{r.subtitle}</span>
+					</span>
+				) : (
+					<span>{r.name}</span>
+				),
+		},
+		{ id: 'u', header: 'Units', align: 'right', gridTrack: '90px', cell: (r) => <span className='tabular-nums'>{r.quantity}</span> },
+	];
+	return (
+		<div className='max-w-xl space-y-2'>
+			<p className='text-sm text-muted-foreground'>
+				Variable-height rows: <code className='rounded bg-muted px-1'>getRowHeight</code> guesses tall vs short rows;
+				<code className='rounded bg-muted px-1'> measureDynamicRows</code> refines with DOM measurement.
+			</p>
+			<SbDataTable
+				columns={cols}
+				data={ROWS_5K_DYN}
+				getRowId={(r) => r.id}
+				virtualize={{
+					estimateRowHeight: 40,
+					getRowHeight: (i) => (ROWS_5K_DYN[i]?.subtitle ? 72 : 40),
+					overscan: 8,
+					scrollContainerHeight: 400,
+					measureDynamicRows: true,
+				}}
+			/>
+		</div>
+	);
+}
+
+export const VirtualizedTenThousandRows: Story = {
+	render: () => <VirtualizedTenThousandDemo />,
+};
+
+export const VirtualizedDynamicRowHeights: Story = {
+	render: () => <VirtualizedDynamicHeightsDemo />,
 };
 
 export const ScrollableManyRows: Story = {

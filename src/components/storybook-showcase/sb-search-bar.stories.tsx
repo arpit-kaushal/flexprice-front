@@ -12,7 +12,14 @@ const meta: Meta<typeof SbSearchBar> = {
 	decorators: storyChromeDecorators,
 	argTypes: { debounceMs: { control: 'number' }, placeholder: { control: 'text' }, disabled: { control: 'boolean' } },
 	args: { placeholder: 'Search plans, SKU, entitlement…', debounceMs: 400 },
-	parameters: { layout: 'padded' },
+	parameters: {
+		layout: 'padded',
+		docs: {
+			description: {
+				component: 'Controlled search field with optional debounced callback. Live echo under the field mirrors typing.',
+			},
+		},
+	},
 };
 
 export default meta;
@@ -31,7 +38,10 @@ function SearchBarPlayground(props: ComponentProps<typeof SbSearchBar>) {
 					debounced(next);
 				}}
 			/>
-			<p className='text-xs text-muted-foreground'>Debounced payloads appear in the Actions panel.</p>
+			<p className='text-xs font-medium text-foreground' aria-live='polite' data-testid='search-echo'>
+				{v.length ? `Live query: “${v}”` : 'Live query: (empty)'}
+			</p>
+			<p className='text-xs text-muted-foreground'>Debounced payloads also log to the Actions panel (`fn`).</p>
 		</div>
 	);
 }
@@ -43,6 +53,7 @@ export const Default: Story = {
 		const input = canvas.getByRole('textbox');
 		await userEvent.type(input, 'api');
 		await expect(input).toHaveValue('api');
+		await expect(canvas.getByTestId('search-echo')).toHaveTextContent(/api/);
 	},
 };
 
@@ -78,5 +89,6 @@ export const ControlledClear: Story = {
 		await expect(input).toHaveValue('sandbox');
 		await userEvent.click(c.getByRole('button', { name: /clear/i }));
 		await expect(input).toHaveValue('');
+		await expect(c.getByRole('button', { name: /clear/i })).not.toBeVisible();
 	},
 };

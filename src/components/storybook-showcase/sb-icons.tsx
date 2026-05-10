@@ -34,7 +34,6 @@ export function SbIconChevronRight(props: SvgProps) {
 	return strokeIcon(<path d='m9 18 6-6-6-6' />, props);
 }
 
-/** Narrow rail + panel — “show sidebar” affordance */
 export function SbIconSidebarReveal(props: SvgProps) {
 	return strokeIcon(
 		<>
@@ -45,7 +44,6 @@ export function SbIconSidebarReveal(props: SvgProps) {
 	);
 }
 
-/** Panel with rail on the right — “hide sidebar” affordance */
 export function SbIconSidebarHide(props: SvgProps) {
 	return strokeIcon(
 		<>

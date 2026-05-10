@@ -40,6 +40,7 @@ export function SbDateRangePicker({
 				<label className='sr-only'>Start</label>
 				<input
 					type='date'
+					aria-label={`${title} start`}
 					value={start}
 					onChange={(ev) => {
 						const v = ev.target.value;
@@ -52,6 +53,7 @@ export function SbDateRangePicker({
 				<label className='sr-only'>End</label>
 				<input
 					type='date'
+					aria-label={`${title} end`}
 					value={end}
 					onChange={(ev) => {
 						const v = ev.target.value;

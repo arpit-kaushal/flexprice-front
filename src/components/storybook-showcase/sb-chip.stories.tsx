@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect, fn, userEvent, within } from '@storybook/test';
+import { expect, userEvent, within } from '@storybook/test';
 import { storyChromeDecorators } from './preview-decorator';
 import { SbChip } from './sb-chip';
 import { SbIconArchive, SbIconPauseCircle } from './sb-icons';
+import { StoryFeedbackSlot } from './story-interaction-helpers';
 
 const meta: Meta<typeof SbChip> = {
 	title: 'Showcase/Atoms/Chip',
@@ -14,13 +15,27 @@ const meta: Meta<typeof SbChip> = {
 		disabled: { control: 'boolean' },
 		label: { control: 'text' },
 	},
-	args: { label: 'Active', variant: 'success' },
+	args: {
+		label: 'Active',
+		variant: 'success',
+		disabled: false,
+	},
+	parameters: {
+		docs: {
+			description: {
+				component:
+					'Filter / status chip implemented as a `<button>`. **InteractRemovesFilter** pairs the chip with an on-screen acknowledgement banner.',
+			},
+		},
+	},
 };
 
 export default meta;
 type Story = StoryObj<typeof SbChip>;
 
-export const Default: Story = {};
+export const Default: Story = {
+	render: (args) => <SbChip {...args} />,
+};
 
 export const Variants: Story = {
 	render: () => (
@@ -42,14 +57,18 @@ export const Variants: Story = {
 	),
 };
 
-export const InteractiveChip: Story = {
-	args: { label: 'Remove filter', variant: 'default', onClick: fn() },
-	render: (args) => <SbChip {...args} />,
-	play: async ({ args, canvasElement }) => {
+export const InteractRemovesFilter: Story = {
+	args: { label: 'Status: Active', variant: 'success' },
+	render: (args) => (
+		<StoryFeedbackSlot
+			confirmPrefix='Filter cleared'
+			hintText='Activate the chip — a confirmation replaces this hint.'
+			trigger={<SbChip {...args} />}
+		/>
+	),
+	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const chip = canvas.getByRole('button', { name: /remove filter/i });
-		chip.focus();
-		await userEvent.keyboard('{Enter}');
-		await expect(args.onClick).toHaveBeenCalled();
+		await userEvent.click(canvas.getByRole('button', { name: /status: active/i }));
+		await expect(await canvas.findByRole('status')).toHaveTextContent(/Filter cleared/);
 	},
 };

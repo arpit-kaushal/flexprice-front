@@ -18,8 +18,21 @@ const meta: Meta<typeof SbSortDropdown> = {
 	component: SbSortDropdown,
 	tags: ['autodocs'],
 	decorators: storyChromeDecorators,
-	parameters: { layout: 'centered', backgrounds: { default: 'light' } },
 	args: { disabled: false, maxSorts: 10, className: '' },
+	argTypes: {
+		disabled: { control: 'boolean' },
+		maxSorts: { control: { type: 'number', min: 1, max: 20 } },
+		className: { control: 'text' },
+	},
+	parameters: {
+		layout: 'centered',
+		backgrounds: { default: 'light' },
+		docs: {
+			description: {
+				component: 'Multi-sort popover. **InteractiveOpenPopover** asserts the empty-state copy is visible.',
+			},
+		},
+	},
 };
 
 export default meta;

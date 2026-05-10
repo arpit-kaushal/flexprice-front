@@ -18,6 +18,13 @@ const meta: Meta<Args> = {
 		delayMs: { control: { type: 'range', min: 0, max: 1200, step: 50 } },
 	},
 	args: { text: 'This charge includes prorations from the upgrade path.', delayMs: 0 },
+	parameters: {
+		docs: {
+			description: {
+				component: 'Radix tooltip wired to showcase button. **InteractiveHover** asserts tooltip copy lands in the DOM (visible on hover).',
+			},
+		},
+	},
 };
 
 export default meta;

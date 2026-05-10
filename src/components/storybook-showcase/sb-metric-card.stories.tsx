@@ -1,5 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { expect, userEvent, within } from '@storybook/test';
+import { useState } from 'react';
 import { storyChromeDecorators } from './preview-decorator';
+import { SbButton } from './sb-button';
 import { SbMetricCard } from './sb-metric-card';
 
 const meta: Meta<typeof SbMetricCard> = {
@@ -22,7 +25,14 @@ const meta: Meta<typeof SbMetricCard> = {
 		showChangeIndicator: true,
 		isNegative: false,
 	},
-	parameters: { layout: 'padded' },
+	parameters: {
+		layout: 'padded',
+		docs: {
+			description: {
+				component: 'Static KPI tiles. **InteractTrend** demonstrates toggling polarity with visible narration.',
+			},
+		},
+	},
 };
 
 export default meta;
@@ -41,4 +51,29 @@ export const Variants: Story = {
 			<SbMetricCard title='Churned ARR' value={12400} currency='USD' showChangeIndicator isNegative />
 		</div>
 	),
+};
+
+function TrendToggleDemo() {
+	const [negative, setNegative] = useState(false);
+	return (
+		<div className='max-w-md space-y-3'>
+			<SbButton type='button' variant='outline' size='sm' onClick={() => setNegative((v) => !v)}>
+				Toggle sentiment
+			</SbButton>
+			<SbMetricCard title='Growth delta' value={4.12} isPercent showChangeIndicator isNegative={negative} />
+			<p className='text-sm text-muted-foreground' aria-live='polite' role='status' data-testid='sentiment-flag'>
+				Showing {negative ? 'negative churn (red caret)' : 'positive expansion (chart tone)'}.
+			</p>
+		</div>
+	);
+}
+
+export const InteractTrend: Story = {
+	render: () => <TrendToggleDemo />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByTestId('sentiment-flag')).toHaveTextContent(/positive expansion/i);
+		await userEvent.click(canvas.getByRole('button', { name: /toggle sentiment/i }));
+		await expect(canvas.getByTestId('sentiment-flag')).toHaveTextContent(/negative churn/i);
+	},
 };
